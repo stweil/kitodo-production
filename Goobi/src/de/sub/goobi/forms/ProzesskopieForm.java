@@ -396,8 +396,8 @@ public class ProzesskopieForm {
 		List<SelectItem> myProzessTemplates = new ArrayList<SelectItem>();
 		Session session = Helper.getHibernateSession();
 		Criteria crit = session.createCriteria(Prozess.class);
-		crit.add(Restrictions.eq("istTemplate", Boolean.valueOf(false)));
-		crit.add(Restrictions.eq("inAuswahllisteAnzeigen", Boolean.valueOf(true)));
+		crit.add(Restrictions.eq("istTemplate", Boolean.FALSE));
+		crit.add(Restrictions.eq("inAuswahllisteAnzeigen", Boolean.TRUE));
 		crit.addOrder(Order.asc("titel"));
 
 		/* Einschränkung auf bestimmte Projekte, wenn kein Admin */
@@ -855,8 +855,8 @@ public class ProzesskopieForm {
 				Helper.setFehlerMeldung("DocStrctType is configured as anchor but has no allowedchildtype.",
 						populizer != null && populizer.getType() != null ? populizer.getType().getName() : null);
 			} catch (IndexOutOfBoundsException e) { // if getAllAllowedDocStructTypes() returns empty list
-				Helper.setFehlerMeldung("DocStrctType is configured as anchor but has no allowedchildtype.", populizer
-						.getType().getName());
+				Helper.setFehlerMeldung("DocStrctType is configured as anchor but has no allowedchildtype.",
+						populizer != null && populizer.getType() != null ? populizer.getType().getName() : null);
 			} catch (UGHException catchAll) {
 				Helper.setFehlerMeldung(catchAll.getMessage());
 			}
@@ -1765,7 +1765,7 @@ public class ProzesskopieForm {
 		while (tokenizer.hasMoreTokens()) {
 			String myString = tokenizer.nextToken();
 			/*
-			 * wenn der String mit ' anf�ngt und mit ' endet, dann den Inhalt so übernehmen
+			 * wenn der String mit ' anfängt und mit ' endet, dann den Inhalt so übernehmen
 			 */
 			if (myString.startsWith("'") && myString.endsWith("'") && myString.length() > 2) {
 				this.tifHeader_imagedescription += myString.substring(1, myString.length() - 1);

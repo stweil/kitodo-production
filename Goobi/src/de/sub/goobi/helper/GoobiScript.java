@@ -290,7 +290,7 @@ public class GoobiScript {
     }
 
     /**
-     * voll allen gewählten Prozessen die Daten aus einem Verzeichnis einspielen ================================================================
+     * von allen gewählten Prozessen die Daten aus einem Verzeichnis einspielen ================================================================
      */
     private void importFromFileSystem(List<Prozess> inProzesse) {
         /*
@@ -934,8 +934,7 @@ public class GoobiScript {
             try {
 
                 Fileformat myRdf = proz.readMetadataFile();
-                UghHelper ughhelp = new UghHelper();
-                MetadataType mdt = ughhelp.getMetadataType(proz, "pathimagefiles");
+                MetadataType mdt = UghHelper.getMetadataType(proz, "pathimagefiles");
                 List<? extends ugh.dl.Metadata> alleImagepfade = myRdf.getDigitalDocument().getPhysicalDocStruct().getAllMetadataByType(mdt);
                 if (alleImagepfade.size() > 0) {
                     for (Metadata md : alleImagepfade) {

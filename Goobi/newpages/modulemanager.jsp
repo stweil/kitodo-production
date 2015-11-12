@@ -33,7 +33,7 @@
 --%>
 <%-- ######################################## 
 
-							Alle Benutzer in der �?bersicht
+							Alle Benutzer in der Übersicht
 
 	#########################################--%>
 
@@ -69,7 +69,7 @@
 
 										<h:commandButton id="button1" value="Read configuration"
 											rendered="#{ModuleServerForm.running==false}"
-											action="#{ModuleServerForm.readAllModulesFromConfiguraion}" />
+											action="#{ModuleServerForm.readAllModulesFromConfiguration}" />
 										<h:commandButton id="button2" value="Start all modules"
 											rendered="#{ModuleServerForm.running==true}"
 											action="#{ModuleServerForm.startAllModules}" />
@@ -83,7 +83,7 @@
 											<htm:tr>
 												<htm:td>
 
-													<%-- �?berschrift --%>
+													<%-- Überschrift --%>
 													<htm:h3>
 														<h:outputText id="id5" value="#{msgs.aktiveModule}" />
 													</htm:h3>

@@ -2,23 +2,23 @@ package de.sub.goobi.persistence.apache;
 
 /**
  * This file is part of the Goobi Application - a Workflow tool for the support of mass digitization.
- * 
- * Visit the websites for more information. 
+ *
+ * Visit the websites for more information.
  *     		- http://www.goobi.org
  *     		- https://github.com/goobi/goobi-production
  * 		    - http://gdz.sub.uni-goettingen.de
  * 			- http://www.intranda.com
- * 			- http://digiverso.com 
- * 
+ * 			- http://digiverso.com
+ *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free
  * Software Foundation; either version 2 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Linking this library statically or dynamically with other modules is making a combined work based on this library. Thus, the terms and conditions
  * of the GNU General Public License cover the whole combination. As a special exception, the copyright holders of this library give you permission to
  * link this library with independent modules to produce an executable, regardless of the license terms of these independent modules, and to copy and
@@ -42,7 +42,7 @@ import de.sub.goobi.beans.Regelsatz;
 
 public class MySQLUtils {
 
-	public static ResultSetHandler<List<StepObject>> resultSetToStepObjectListHandler = new ResultSetHandler<List<StepObject>>() {
+	public static final ResultSetHandler<List<StepObject>> resultSetToStepObjectListHandler = new ResultSetHandler<List<StepObject>>() {
 		@Override
 		public List<StepObject> handle(ResultSet rs) throws SQLException {
 			List<StepObject> answer = new ArrayList<StepObject>();
@@ -57,7 +57,7 @@ public class MySQLUtils {
 		}
 	};
 
-	public static ResultSetHandler<StepObject> resultSetToStepObjectHandler = new ResultSetHandler<StepObject>() {
+	public static final ResultSetHandler<StepObject> resultSetToStepObjectHandler = new ResultSetHandler<StepObject>() {
 		@Override
 		public StepObject handle(ResultSet rs) throws SQLException {
 			StepObject answer = null;
@@ -69,7 +69,7 @@ public class MySQLUtils {
 		}
 	};
 
-	public static ResultSetHandler<Regelsatz> resultSetToRulesetHandler = new ResultSetHandler<Regelsatz>() {
+	public static final ResultSetHandler<Regelsatz> resultSetToRulesetHandler = new ResultSetHandler<Regelsatz>() {
 		@Override
 		public Regelsatz handle(ResultSet rs) throws SQLException {
 			if (rs.next()) {
@@ -88,7 +88,7 @@ public class MySQLUtils {
 		}
 	};
 
-	public static ResultSetHandler<List<Property>> resultSetToProcessPropertyListHandler = new ResultSetHandler<List<Property>>() {
+	public static final ResultSetHandler<List<Property>> resultSetToProcessPropertyListHandler = new ResultSetHandler<List<Property>>() {
 		@Override
 		public List<Property> handle(ResultSet rs) throws SQLException {
 			List<Property> answer = new ArrayList<Property>();
@@ -108,7 +108,7 @@ public class MySQLUtils {
 		}
 	};
 
-	public static ResultSetHandler<List<Property>> resultSetToTemplatePropertyListHandler = new ResultSetHandler<List<Property>>() {
+	public static final ResultSetHandler<List<Property>> resultSetToTemplatePropertyListHandler = new ResultSetHandler<List<Property>>() {
 		@Override
 		public List<Property> handle(ResultSet rs) throws SQLException {
 			List<Property> answer = new ArrayList<Property>();
@@ -128,7 +128,7 @@ public class MySQLUtils {
 		}
 	};
 
-	public static ResultSetHandler<List<Property>> resultSetToProductPropertyListHandler = new ResultSetHandler<List<Property>>() {
+	public static final ResultSetHandler<List<Property>> resultSetToProductPropertyListHandler = new ResultSetHandler<List<Property>>() {
 		@Override
 		public List<Property> handle(ResultSet rs) throws SQLException {
 			List<Property> answer = new ArrayList<Property>();
@@ -148,7 +148,7 @@ public class MySQLUtils {
 		}
 	};
 
-	public static ResultSetHandler<ProcessObject> resultSetToProcessHandler = new ResultSetHandler<ProcessObject>() {
+	public static final ResultSetHandler<ProcessObject> resultSetToProcessHandler = new ResultSetHandler<ProcessObject>() {
 		@Override
 		public ProcessObject handle(ResultSet rs) throws SQLException {
 			if (rs.next()) {
@@ -175,7 +175,7 @@ public class MySQLUtils {
 		}
 	};
 
-	public static ResultSetHandler<List<String>> resultSetToScriptsHandler = new ResultSetHandler<List<String>>() {
+	public static final ResultSetHandler<List<String>> resultSetToScriptsHandler = new ResultSetHandler<List<String>>() {
 		@Override
 		public List<String> handle(ResultSet rs) throws SQLException {
 			List<String> answer = new ArrayList<String>();
@@ -200,7 +200,7 @@ public class MySQLUtils {
 		}
 	};
 
-	public static ResultSetHandler<Map<String, String>> resultSetToScriptMapHandler = new ResultSetHandler<Map<String, String>>() {
+	public static final ResultSetHandler<Map<String, String>> resultSetToScriptMapHandler = new ResultSetHandler<Map<String, String>>() {
 		@Override
 		public Map<String, String> handle(ResultSet rs) throws SQLException {
 			Map<String, String> answer = new HashMap<String, String>();
@@ -253,7 +253,7 @@ public class MySQLUtils {
 			boolean typeFinishImmediately = rs.getBoolean("typBeimAnnehmenAbschliessen");
 			String stepPlugin = rs.getString("stepPlugin");
 			String validationPlugin = rs.getString("validationPlugin");
-			
+
 			so = new StepObject(id, title, reihenfolge, bearbeitungsstatus, bearbeitungszeitpunkt, bearbeitungsbeginn, bearbeitungsende,
 					bearbeitungsbenutzer, editType, typExport, typAutomatisch, processId, readAccess, writeAccess, metadataAccess,
 					typeFinishImmediately, stepPlugin, validationPlugin);
@@ -262,7 +262,7 @@ public class MySQLUtils {
 		return so;
 	}
 
-	public static ResultSetHandler<ProjectObject> resultSetToProjectHandler = new ResultSetHandler<ProjectObject>() {
+	public static final ResultSetHandler<ProjectObject> resultSetToProjectHandler = new ResultSetHandler<ProjectObject>() {
 		@Override
 		public ProjectObject handle(ResultSet rs) throws SQLException {
 			if (rs.next()) {
@@ -306,7 +306,7 @@ public class MySQLUtils {
 		}
 	};
 
-	public static ResultSetHandler<List<ProjectFileGroup>> resultSetToProjectFilegroupListHandler = new ResultSetHandler<List<ProjectFileGroup>>() {
+	public static final ResultSetHandler<List<ProjectFileGroup>> resultSetToProjectFilegroupListHandler = new ResultSetHandler<List<ProjectFileGroup>>() {
 		@Override
 		public List<ProjectFileGroup> handle(ResultSet rs) throws SQLException {
 			List<ProjectFileGroup> answer = new ArrayList<ProjectFileGroup>();
@@ -332,7 +332,7 @@ public class MySQLUtils {
 		}
 	};
 
-	public static ResultSetHandler<List<String>> resultSetToFilterListtHandler = new ResultSetHandler<List<String>>() {
+	public static final ResultSetHandler<List<String>> resultSetToFilterListtHandler = new ResultSetHandler<List<String>>() {
 		@Override
 		public List<String> handle(ResultSet rs) throws SQLException {
 			List<String> answer = new ArrayList<String>();
@@ -344,7 +344,7 @@ public class MySQLUtils {
 		}
 	};
 
-	public static ResultSetHandler<List<Integer>> resultSetToIntegerListHandler = new ResultSetHandler<List<Integer>>() {
+	public static final ResultSetHandler<List<Integer>> resultSetToIntegerListHandler = new ResultSetHandler<List<Integer>>() {
 		@Override
 		public List<Integer> handle(ResultSet rs) throws SQLException {
 			List<Integer> answer = new ArrayList<Integer>();
@@ -355,7 +355,7 @@ public class MySQLUtils {
 		}
 	};
 
-	public static ResultSetHandler<Integer> resultSetToIntegerHandler = new ResultSetHandler<Integer>() {
+	public static final ResultSetHandler<Integer> resultSetToIntegerHandler = new ResultSetHandler<Integer>() {
 		@Override
 		public Integer handle(ResultSet rs) throws SQLException {
 			Integer answer = null;

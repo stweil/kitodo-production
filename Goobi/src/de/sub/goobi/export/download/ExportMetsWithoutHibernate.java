@@ -2,23 +2,23 @@ package de.sub.goobi.export.download;
 
 /**
  * This file is part of the Goobi Application - a Workflow tool for the support of mass digitization.
- * 
- * Visit the websites for more information. 
+ *
+ * Visit the websites for more information.
  *     		- http://www.goobi.org
  *     		- https://github.com/goobi/goobi-production
  * 		    - http://gdz.sub.uni-goettingen.de
  * 			- http://www.intranda.com
- * 			- http://digiverso.com 
- * 
+ * 			- http://digiverso.com
+ *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free
  * Software Foundation; either version 2 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Linking this library statically or dynamically with other modules is making a combined work based on this library. Thus, the terms and conditions
  * of the GNU General Public License cover the whole combination. As a special exception, the copyright holders of this library give you permission to
  * link this library with independent modules to produce an executable, regardless of the license terms of these independent modules, and to copy and
@@ -76,7 +76,7 @@ public class ExportMetsWithoutHibernate {
 
 	/**
 	 * DMS-Export in das Benutzer-Homeverzeichnis
-	 * 
+	 *
 	 * @param process
 	 * @throws InterruptedException
 	 * @throws IOException
@@ -104,7 +104,7 @@ public class ExportMetsWithoutHibernate {
 
 	/**
 	 * DMS-Export an eine gewünschte Stelle
-	 * 
+	 *
 	 * @param process
 	 * @param zielVerzeichnis
 	 * @throws InterruptedException
@@ -143,7 +143,7 @@ public class ExportMetsWithoutHibernate {
 
 	/**
 	 * prepare user directory
-	 * 
+	 *
 	 * @param inTargetFolder
 	 *            the folder to prove and maybe create it
 	 */
@@ -160,7 +160,7 @@ public class ExportMetsWithoutHibernate {
 
 	/**
 	 * write MetsFile to given Path
-	 * 
+	 *
 	 * @param process
 	 *            the Process to use
 	 * @param targetFileName
@@ -223,45 +223,35 @@ public class ExportMetsWithoutHibernate {
 			}
 		}
 
-		if (dd != null) {
-			for (ContentFile cf : dd.getFileSet().getAllFiles()) {
-				String location = cf.getLocation();
-				// If the file's location string shoes no sign of any protocol,
-				// use the file protocol.
-				if (!location.contains("://")) {
-					location = "file://" + location;
-				}
-				URL url = new URL(location);
-				File f = new File(imageFolder, url.getFile());
-				cf.setLocation(f.toURI().toString());
+		for (ContentFile cf : dd.getFileSet().getAllFiles()) {
+			String location = cf.getLocation();
+			// If the file's location string shoes no sign of any protocol,
+			// use the file protocol.
+			if (!location.contains("://")) {
+				location = "file://" + location;
 			}
+			URL url = new URL(location);
+			File f = new File(imageFolder, url.getFile());
+			cf.setLocation(f.toURI().toString());
+		}
 
-			mm.setDigitalDocument(dd);
+		mm.setDigitalDocument(dd);
 
-			/*
-			 * -------------------------------- wenn Filegroups definiert wurden, werden diese jetzt in die Metsstruktur übernommen
-			 * --------------------------------
-			 */
-			// Replace all paths with the given VariableReplacer, also the file
-			// group paths!
-			VariableReplacerWithoutHibernate vp = new VariableReplacerWithoutHibernate(mm.getDigitalDocument(), this.myPrefs, process, null);
-			List<ProjectFileGroup> myFilegroups = ProjectManager.getFilegroupsForProjectId(this.project.getId());
+		/*
+		 * -------------------------------- wenn Filegroups definiert wurden, werden diese jetzt in die Metsstruktur übernommen
+		 * --------------------------------
+		 */
+		// Replace all paths with the given VariableReplacer, also the file
+		// group paths!
+		VariableReplacerWithoutHibernate vp = new VariableReplacerWithoutHibernate(mm.getDigitalDocument(), this.myPrefs, process, null);
+		List<ProjectFileGroup> myFilegroups = ProjectManager.getFilegroupsForProjectId(this.project.getId());
 
-			if (myFilegroups != null && myFilegroups.size() > 0) {
-				for (ProjectFileGroup pfg : myFilegroups) {
-					// check if source files exists
-					if (pfg.getFolder() != null && pfg.getFolder().length() > 0) {
-						File folder = new File(this.fi.getMethodFromName(pfg.getFolder()));
-						if (folder != null && folder.exists() && folder.list().length > 0) {
-							VirtualFileGroup v = new VirtualFileGroup();
-							v.setName(pfg.getName());
-							v.setPathToFiles(vp.replace(pfg.getPath()));
-							v.setMimetype(pfg.getMimetype());
-							v.setFileSuffix(pfg.getSuffix());
-							mm.getDigitalDocument().getFileSet().addVirtualFileGroup(v);
-						}
-					} else {
-
+		if (myFilegroups != null && myFilegroups.size() > 0) {
+			for (ProjectFileGroup pfg : myFilegroups) {
+				// check if source files exists
+				if (pfg.getFolder() != null && pfg.getFolder().length() > 0) {
+					File folder = new File(this.fi.getMethodFromName(pfg.getFolder()));
+					if (folder != null && folder.exists() && folder.list().length > 0) {
 						VirtualFileGroup v = new VirtualFileGroup();
 						v.setName(pfg.getName());
 						v.setPathToFiles(vp.replace(pfg.getPath()));
@@ -269,68 +259,76 @@ public class ExportMetsWithoutHibernate {
 						v.setFileSuffix(pfg.getSuffix());
 						mm.getDigitalDocument().getFileSet().addVirtualFileGroup(v);
 					}
+				} else {
+
+					VirtualFileGroup v = new VirtualFileGroup();
+					v.setName(pfg.getName());
+					v.setPathToFiles(vp.replace(pfg.getPath()));
+					v.setMimetype(pfg.getMimetype());
+					v.setFileSuffix(pfg.getSuffix());
+					mm.getDigitalDocument().getFileSet().addVirtualFileGroup(v);
 				}
 			}
-
-			// Replace rights and digiprov entries.
-			mm.setRightsOwner(vp.replace(this.project.getMetsRightsOwner()));
-			mm.setRightsOwnerLogo(vp.replace(this.project.getMetsRightsOwnerLogo()));
-			mm.setRightsOwnerSiteURL(vp.replace(this.project.getMetsRightsOwnerSite()));
-			mm.setRightsOwnerContact(vp.replace(this.project.getMetsRightsOwnerMail()));
-			mm.setDigiprovPresentation(vp.replace(this.project.getMetsDigiprovPresentation()));
-			mm.setDigiprovReference(vp.replace(this.project.getMetsDigiprovReference()));
-			mm.setDigiprovPresentationAnchor(vp.replace(this.project.getMetsDigiprovPresentationAnchor()));
-			mm.setDigiprovReferenceAnchor(vp.replace(this.project.getMetsDigiprovReferenceAnchor()));
-
-			mm.setPurlUrl(vp.replace(this.project.getMetsPurl()));
-			mm.setContentIDs(vp.replace(this.project.getMetsContentIDs()));
-
-			// Set mets pointers. MetsPointerPathAnchor or mptrAnchorUrl is the
-			// pointer used to point to the superordinate (anchor) file, that is
-			// representing a “virtual” group such as a series. Several anchors
-			// pointer paths can be defined/ since it is possible to define several
-			// levels of superordinate structures (such as the complete edition of
-			// a daily newspaper, one year ouf of that edition, …)
-			String anchorPointersToReplace = this.project.getMetsPointerPath();
-			mm.setMptrUrl(null);
-			for (String anchorPointerToReplace : anchorPointersToReplace.split(Projekt.ANCHOR_SEPARATOR)) {
-				String anchorPointer = vp.replace(anchorPointerToReplace);
-				mm.setMptrUrl(anchorPointer);
-			}
-
-			// metsPointerPathAnchor or mptrAnchorUrl is the pointer used to point
-			// from the (lowest) superordinate (anchor) file to the lowest level
-			// file (the non-anchor file). 
-			String anchor = this.project.getMetsPointerPathAnchor();
-			String pointer = vp.replace(anchor);
-			mm.setMptrAnchorUrl(pointer);
-
-			List<String> images = new ArrayList<String>();
-			try {
-				// TODO andere Dateigruppen nicht mit image Namen ersetzen
-				images = this.fi.getDataFiles();
-				if (images != null) {
-					int sizeOfPagination = dd.getPhysicalDocStruct().getAllChildren().size();
-					int sizeOfImages = images.size();
-					if (sizeOfPagination == sizeOfImages) {
-						dd.overrideContentFiles(images);
-					} else {
-						List<String> param = new ArrayList<String>();
-						param.add(String.valueOf(sizeOfPagination));
-						param.add(String.valueOf(sizeOfImages));
-						Helper.setFehlerMeldung(Helper.getTranslation("imagePaginationError", param));
-						return false;
-					}
-				} 
-			} catch (IndexOutOfBoundsException e) {
-
-				myLogger.error(e);
-			} catch (InvalidImagesException e) {
-				myLogger.error(e);
-			}
-			mm.write(targetFileName);
-			Helper.setMeldung(null, process.getTitle() + ": ", "ExportFinished");
 		}
+
+		// Replace rights and digiprov entries.
+		mm.setRightsOwner(vp.replace(this.project.getMetsRightsOwner()));
+		mm.setRightsOwnerLogo(vp.replace(this.project.getMetsRightsOwnerLogo()));
+		mm.setRightsOwnerSiteURL(vp.replace(this.project.getMetsRightsOwnerSite()));
+		mm.setRightsOwnerContact(vp.replace(this.project.getMetsRightsOwnerMail()));
+		mm.setDigiprovPresentation(vp.replace(this.project.getMetsDigiprovPresentation()));
+		mm.setDigiprovReference(vp.replace(this.project.getMetsDigiprovReference()));
+		mm.setDigiprovPresentationAnchor(vp.replace(this.project.getMetsDigiprovPresentationAnchor()));
+		mm.setDigiprovReferenceAnchor(vp.replace(this.project.getMetsDigiprovReferenceAnchor()));
+
+		mm.setPurlUrl(vp.replace(this.project.getMetsPurl()));
+		mm.setContentIDs(vp.replace(this.project.getMetsContentIDs()));
+
+		// Set mets pointers. MetsPointerPathAnchor or mptrAnchorUrl is the
+		// pointer used to point to the superordinate (anchor) file, that is
+		// representing a “virtual” group such as a series. Several anchors
+		// pointer paths can be defined/ since it is possible to define several
+		// levels of superordinate structures (such as the complete edition of
+		// a daily newspaper, one year ouf of that edition, …)
+		String anchorPointersToReplace = this.project.getMetsPointerPath();
+		mm.setMptrUrl(null);
+		for (String anchorPointerToReplace : anchorPointersToReplace.split(Projekt.ANCHOR_SEPARATOR)) {
+			String anchorPointer = vp.replace(anchorPointerToReplace);
+			mm.setMptrUrl(anchorPointer);
+		}
+
+		// metsPointerPathAnchor or mptrAnchorUrl is the pointer used to point
+		// from the (lowest) superordinate (anchor) file to the lowest level
+		// file (the non-anchor file).
+		String anchor = this.project.getMetsPointerPathAnchor();
+		String pointer = vp.replace(anchor);
+		mm.setMptrAnchorUrl(pointer);
+
+		List<String> images = new ArrayList<String>();
+		try {
+			// TODO andere Dateigruppen nicht mit image Namen ersetzen
+			images = this.fi.getDataFiles();
+			if (images != null) {
+				int sizeOfPagination = dd.getPhysicalDocStruct().getAllChildren().size();
+				int sizeOfImages = images.size();
+				if (sizeOfPagination == sizeOfImages) {
+					dd.overrideContentFiles(images);
+				} else {
+					List<String> param = new ArrayList<String>();
+					param.add(String.valueOf(sizeOfPagination));
+					param.add(String.valueOf(sizeOfImages));
+					Helper.setFehlerMeldung(Helper.getTranslation("imagePaginationError", param));
+					return false;
+				}
+			}
+		} catch (IndexOutOfBoundsException e) {
+
+			myLogger.error(e);
+		} catch (InvalidImagesException e) {
+			myLogger.error(e);
+		}
+		mm.write(targetFileName);
+		Helper.setMeldung(null, process.getTitle() + ": ", "ExportFinished");
 		return true;
 	}
 }
