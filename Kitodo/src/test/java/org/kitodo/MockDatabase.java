@@ -43,6 +43,7 @@ import javax.json.JsonReader;
 
 import com.xebialabs.restito.semantics.Action;
 import com.xebialabs.restito.server.StubServer;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -293,7 +294,7 @@ public class MockDatabase {
     private static void removeOldDataDirectories(String dataDirectory) throws Exception {
         File dataDir = new File(dataDirectory);
         if (dataDir.exists()) {
-            FileSystemUtils.deleteSubDirectories(dataDir.toPath());
+            FileUtils.deleteDirectory(dataDir);
         }
     }
 
