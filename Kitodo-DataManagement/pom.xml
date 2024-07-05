@@ -79,8 +79,10 @@
             <groupId>org.opensearch</groupId>
             <artifactId>opensearch-core</artifactId>
         </dependency>
-<!--
--->
+        <dependency>
+            <groupId>org.opensearch.plugin</groupId>
+            <artifactId>transport-netty4-client</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.opensearch.client</groupId>
             <artifactId>opensearch-rest-high-level-client</artifactId>
@@ -92,10 +94,6 @@
         <dependency>
             <groupId>org.opensearch.client</groupId>
             <artifactId>opensearch-java</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.opensearch.client</groupId>
-            <artifactId>transport</artifactId>
         </dependency>
         <dependency>
             <groupId>jakarta.json</groupId>
