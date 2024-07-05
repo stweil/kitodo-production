@@ -19,7 +19,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.List;
 import java.util.Objects;
 
-import org.opensearch.ElasticsearchStatusException;
+import org.opensearch.OpenSearchStatusException;
 import org.opensearch.index.query.Operator;
 import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.search.sort.SortBuilders;
@@ -559,7 +559,7 @@ public class FilterServiceIT {
         // empty condition is not allowed and throws Exception in ElasticSearch 7
         query = filterService.queryBuilder("\"id:\"", ObjectType.PROCESS, false, false);
         QueryBuilder finalQuery = query;
-        Assertions.assertThrows(ElasticsearchStatusException.class,
+        Assertions.assertThrows(OpenSearchStatusException.class,
                 () -> processService.findByQuery(finalQuery, true));
     }
 }
