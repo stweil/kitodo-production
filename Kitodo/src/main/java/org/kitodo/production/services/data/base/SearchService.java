@@ -17,6 +17,8 @@ import static org.opensearch.index.query.QueryBuilders.queryStringQuery;
 import static org.opensearch.index.query.QueryBuilders.rangeQuery;
 import static org.opensearch.index.query.QueryBuilders.termsQuery;
 
+import jakarta.json.JsonObject;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -26,7 +28,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import javax.json.JsonObject;
 import javax.ws.rs.HttpMethod;
 
 import org.apache.logging.log4j.LogManager;

@@ -11,16 +11,16 @@
 
 package org.kitodo.data.elasticsearch.search;
 
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonReader;
+
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
 
 import org.kitodo.data.elasticsearch.Index;
 import org.kitodo.data.elasticsearch.exceptions.CustomResponseException;

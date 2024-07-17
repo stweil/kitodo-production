@@ -95,13 +95,23 @@
             <groupId>org.opensearch.plugin</groupId>
             <artifactId>transport-netty4-client</artifactId>
         </dependency>
+<!--
         <dependency>
             <groupId>org.glassfish</groupId>
             <artifactId>jakarta.json</artifactId>
         </dependency>
+-->
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.json</groupId>
+            <artifactId>jakarta.json-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.parsson</groupId>
+            <artifactId>jakarta.json</artifactId>
         </dependency>
         <dependency>
             <groupId>org.hibernate</groupId>
