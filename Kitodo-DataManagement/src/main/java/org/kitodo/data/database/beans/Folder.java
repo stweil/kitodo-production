@@ -127,7 +127,8 @@ public class Folder extends BaseBean {
      * type is used to derive depending settings, such as the file extension, or
      * which content processors can be employed.
      *
-     * @see org.kitodo.config.xml.fileformats.FileFormatsConfig
+     * <p>
+     * See org.kitodo.config.xml.fileformats.FileFormatsConfig.
      */
     @Column(name = "mimeType")
     private String mimeType = "image/jpeg";

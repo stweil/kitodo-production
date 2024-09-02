@@ -18,8 +18,8 @@ import java.util.Map;
  * Interface for serving types which are added to the index.
  *
  * <p>
- * Note: MySQL -> Databases -> Tables -> Columns/Rows ElasticSearch -> Indices
- * -> Types -> Documents with Properties
+ * Note: MySQL → Databases → Tables → Columns/Rows ElasticSearch → Indices
+ * → Types → Documents with Properties
  */
 public interface TypeInterface<T> {
 
