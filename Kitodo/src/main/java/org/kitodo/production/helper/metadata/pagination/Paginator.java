@@ -5,8 +5,8 @@
  *
  * It is licensed under GNU General Public License version 3 or later.
  *
- * For the full copyright and license information, please read the
- * GPL3-License.txt file that was distributed with this source code.
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 package org.kitodo.production.helper.metadata.pagination;
@@ -35,6 +35,7 @@ public class Paginator implements Iterator<String> {
      */
     private HalfInteger value;
 
+    @SuppressWarnings("checkstyle:methodlength")
     private void parse(String initializer) {
 
         StringBuilder stringBuilder = new StringBuilder();

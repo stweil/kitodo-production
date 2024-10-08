@@ -7,8 +7,8 @@
  *
  * It is licensed under GNU General Public License version 3 or later.
  *
- * For the full copyright and license information, please read the
- * GPL3-License.txt file that was distributed with this source code.
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -59,7 +59,7 @@
         <jaxen.version>1.2.0</jaxen.version>
         <jhove.version>1.20.1</jhove.version>
         <myfaces.version>2.3.10</myfaces.version>
-        <mysql.version>8.0.31</mysql.version>
+        <mysql.version>8.2.0</mysql.version>
         <poi.version>5.2.2</poi.version>
         <primefaces.extensions.version>8.0.5</primefaces.extensions.version>
         <saxon.version>9.9.1-8</saxon.version>
@@ -152,9 +152,9 @@
                 <version>${commons-codec.version}</version>
             </dependency>
             <dependency>
-                <groupId>commons-collections</groupId>
-                <artifactId>commons-collections</artifactId>
-                <version>3.2.2</version>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-collections4</artifactId>
+                <version>4.4</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
@@ -322,10 +322,6 @@ from system library in Java 11+ -->
                     <exclusion>
                         <groupId>commons-beanutils</groupId>
                         <artifactId>commons-beanutils</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>commons-collections</groupId>
-                        <artifactId>commons-collections</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>

@@ -5,8 +5,8 @@
  *
  * It is licensed under GNU General Public License version 3 or later.
  *
- * For the full copyright and license information, please read the
- * GPL3-License.txt file that was distributed with this source code.
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 package org.kitodo.data.elasticsearch;
@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 
+import org.apache.commons.io.FileUtils;
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.elasticsearch.common.io.FileSystemUtils;
@@ -54,7 +55,7 @@ public class MockEntity {
     private static void removeOldDataDirectories(String dataDirectory) throws Exception {
         File dataDir = new File(dataDirectory);
         if (dataDir.exists()) {
-            FileSystemUtils.deleteSubDirectories(dataDir.toPath());
+            FileUtils.deleteDirectory(dataDir);
         }
     }
 

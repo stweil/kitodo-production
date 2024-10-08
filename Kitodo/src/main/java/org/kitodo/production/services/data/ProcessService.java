@@ -5,8 +5,8 @@
  *
  * It is licensed under GNU General Public License version 3 or later.
  *
- * For the full copyright and license information, please read the
- * GPL3-License.txt file that was distributed with this source code.
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 package org.kitodo.production.services.data;
@@ -931,6 +931,7 @@ public class ProcessService extends ProjectSearchService<Process, ProcessDTO, Pr
     }
 
     @Override
+    @SuppressWarnings("checkstyle:methodlength")
     public ProcessDTO convertJSONObjectToDTO(Map<String, Object> jsonObject, boolean related) throws DataException {
         ProcessDTO processDTO = new ProcessDTO();
         if (!jsonObject.isEmpty()) {

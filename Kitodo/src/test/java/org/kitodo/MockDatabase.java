@@ -5,8 +5,8 @@
  *
  * It is licensed under GNU General Public License version 3 or later.
  *
- * For the full copyright and license information, please read the
- * GPL3-License.txt file that was distributed with this source code.
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 package org.kitodo;
@@ -43,6 +43,7 @@ import javax.json.JsonReader;
 
 import com.xebialabs.restito.semantics.Action;
 import com.xebialabs.restito.server.StubServer;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -293,7 +294,7 @@ public class MockDatabase {
     private static void removeOldDataDirectories(String dataDirectory) throws Exception {
         File dataDir = new File(dataDirectory);
         if (dataDir.exists()) {
-            FileSystemUtils.deleteSubDirectories(dataDir.toPath());
+            FileUtils.deleteDirectory(dataDir);
         }
     }
 
