@@ -91,8 +91,9 @@ jobs:
       #      brew list
       #      brew install chromium
       - name: set up MariaDB, JDK 11 and Tomcat 9
-        run:
-            brew install mariadb openjdk@11 tomcat@9
+        run: |
+            brew install imagemagick mariadb openjdk@11
+      # tomcat@9
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
@@ -118,17 +119,18 @@ jobs:
             mariadb -e "CREATE USER 'kitodo'@'localhost' IDENTIFIED BY 'kitodo';"
             mariadb -e "GRANT ALL ON kitodo.* TO 'kitodo'@'localhost';"
       - name: import schema
-        run:
+        run: |
             mariadb kitodo < $GITHUB_WORKSPACE/Kitodo/setup/schema.sql
       - name: import default
-        run:
+        run: |
             mariadb kitodo < $GITHUB_WORKSPACE/Kitodo/setup/default.sql
       - name: check java version
-        run:
+        run: |
             java --version
       - name: check maven version
-        run:
+        run: |
             mvn --version
       - name: run build
-        run:
-            mvn clean install -B '-Pall-tests,flyway,checkstyle,!development' && xvfb-run --server-args="-screen 0 1600x1280x24" mvn clean install -B '-Pselenium,!development'
+        run: |
+            mvn clean install -B '-Pall-tests,flyway,checkstyle,!development' && \
+            xvfb-run --server-args="-screen 0 1600x1280x24" mvn clean install -B '-Pselenium,!development'
