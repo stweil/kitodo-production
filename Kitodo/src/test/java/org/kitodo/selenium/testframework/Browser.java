@@ -99,6 +99,18 @@ public class Browser {
         ChromeOptions options = new ChromeOptions();
         options.setExperimentalOption("prefs", chromePrefs);
 
+        // Add headless arguments
+        options.addArguments("--headless=new");  // new headless mode for Chrome v109+
+        options.addArguments("--disable-gpu");   // required for some systems
+        options.addArguments("--no-sandbox");    // required for CI environments
+        options.addArguments("--disable-dev-shm-usage"); // prevent Chrome from running out of memory
+        options.addArguments("--window-size=1600,1280"); // set window size
+
+        // Optional but recommended arguments for CI environments
+        options.addArguments("--disable-extensions");
+        options.addArguments("--disable-notifications");
+        options.addArguments("--remote-allow-origins=*");
+
         webDriver = new ChromeDriver(service, options);
     }
 
