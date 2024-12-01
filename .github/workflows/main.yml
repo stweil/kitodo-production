@@ -5,17 +5,27 @@ name: CI
 # Controls when the action will run.
 on:
   # Triggers the workflow on push and pull request events but only for pull_requests on the main branch
-  push:
-  pull_request:
-    branches: [ main ]
+  # push:
+  # pull_request:
+  #   branches: [ main ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+    inputs:
+      os:
+        description: 'Operating system'
+        required: true
+        default: 'ubuntu-20.04'
+        type: choice
+        options:
+          - 'macos-latest'
+          - 'ubuntu-20.04'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
+  # This workflow contains two jobs called "build_linux and build_macos"
+  build_linux:
+    if: ${{ (github.event.inputs.os == '') || (github.event.inputs.os == 'ubuntu-20.04') }}
     # The type of runner that the job will run on
     runs-on: ubuntu-22.04
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -46,7 +56,7 @@ jobs:
         run:
             mysql -u root -proot -e 'CREATE DATABASE kitodo;'
       - name: setup database
-        run:
+        run: |
             mysql -u root -proot -e "CREATE USER 'kitodo'@'localhost' IDENTIFIED BY 'kitodo';"
             mysql -u root -proot -e "GRANT ALL ON kitodo.* TO 'kitodo'@'localhost';"
       - name: import schema
@@ -70,4 +80,55 @@ jobs:
         run:
             mvn clean install -B '-Pall-tests,flyway,checkstyle,!development' && xvfb-run --server-args="-screen 0 1600x1280x24" mvn clean install -B '-Pselenium,!development'
 
+  build_macos:
+    if: ${{ (github.event.inputs.os == 'macos-latest') }}
+    # The type of runner that the job will run on
+    runs-on: macos-latest
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      #- name: update chrome to latest stable
+      #  run: |
+      #      brew list
+      #      brew install chromium
+      - name: set up MariaDB, JDK 11 and Tomcat 9
+        run:
+            brew install mariadb openjdk@11 tomcat@9
 
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v4
+
+      - name: copy files
+        run: |
+            cp $GITHUB_WORKSPACE/config/database.yml.actions $GITHUB_WORKSPACE/config/database.yml
+            cp $GITHUB_WORKSPACE/Kitodo-DataManagement/src/main/resources/db/config/flyway.properties.actions $GITHUB_WORKSPACE/Kitodo-DataManagement/src/main/resources/db/config/flyway.properties
+
+      # Runs a set of commands using the runners shell
+      - name: start MariaDB
+        run: |
+            brew services start mariadb
+            brew services
+      - name: check MariaDB version
+        run: |
+            brew services
+            mariadb --version
+      - name: create and setup database
+        run: |
+            brew services
+            mariadb -e 'CREATE DATABASE kitodo;'
+            mariadb -e "CREATE USER 'kitodo'@'localhost' IDENTIFIED BY 'kitodo';"
+            mariadb -e "GRANT ALL ON kitodo.* TO 'kitodo'@'localhost';"
+      - name: import schema
+        run:
+            mariadb kitodo < $GITHUB_WORKSPACE/Kitodo/setup/schema.sql
+      - name: import default
+        run:
+            mariadb kitodo < $GITHUB_WORKSPACE/Kitodo/setup/default.sql
+      - name: check java version
+        run:
+            java --version
+      - name: check maven version
+        run:
+            mvn --version
+      - name: run build
+        run:
+            mvn clean install -B '-Pall-tests,flyway,checkstyle,!development' && xvfb-run --server-args="-screen 0 1600x1280x24" mvn clean install -B '-Pselenium,!development'
