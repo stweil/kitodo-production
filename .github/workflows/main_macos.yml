@@ -13,54 +13,61 @@ on:
         type: choice
         options:
           - 'macos-latest'
+          - 'macos-13'
+          - 'macos-14'
+          - 'macos-15'
 
 jobs:
   build_macos:
     # The type of runner that the job will run on.
-    runs-on: macos-latest
+    runs-on: ${{ github.event.inputs.os }}
     # Steps represent a sequence of tasks that will be executed as part of the job.
     steps:
-      - name: set up MariaDB, JDK 11 and Tomcat 9
+      - name: Set up MariaDB and JDK 11
         run: |
-            brew install imagemagick mariadb openjdk@11 tomcat@9
+            brew install imagemagick mariadb openjdk@11
+            # tomcat@9
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it.
       - uses: actions/checkout@v4
 
-      - name: copy files
+      - name: Copy files
         run: |
             cp $GITHUB_WORKSPACE/config/database.yml.actions $GITHUB_WORKSPACE/config/database.yml
             cp $GITHUB_WORKSPACE/Kitodo-DataManagement/src/main/resources/db/config/flyway.properties.actions $GITHUB_WORKSPACE/Kitodo-DataManagement/src/main/resources/db/config/flyway.properties
 
       # Runs a set of commands using the runners shell.
-      - name: start MariaDB
+      - name: Start MariaDB
         run: |
             brew services start mariadb
             brew services
-      - name: check MariaDB version
+      - name: Check MariaDB version
         run: |
             brew services
             mariadb --version
-      - name: create and setup database
+      - name: Create and setup database
         run: |
-            brew services
             mariadb -e 'CREATE DATABASE kitodo;'
             mariadb -e "CREATE USER 'kitodo'@'localhost' IDENTIFIED BY 'kitodo';"
             mariadb -e "GRANT ALL ON kitodo.* TO 'kitodo'@'localhost';"
-      - name: import schema
+      - name: Import schema
         run: |
             mariadb kitodo < $GITHUB_WORKSPACE/Kitodo/setup/schema.sql
-      - name: import default
+      - name: Import default
         run: |
             mariadb kitodo < $GITHUB_WORKSPACE/Kitodo/setup/default.sql
-      - name: check java version
+      - name: Check java version
         run: |
             java --version
-      - name: check maven version
+      - name: Check maven version
         run: |
             mvn --version
-      - name: run build
+      - name: Run build
         run: |
-            mvn clean install -B '-Pall-tests,flyway,checkstyle,!development' && \
-            mvn clean install -B '-Pselenium,!development'
+            mvn clean install -B '-Pall-tests,flyway,checkstyle,!development'
+            mariadb --execute="show tables" kitodo
+
+      - name: Run tests
+        run: |
+            mvn install -B '-Pselenium,!development'
             # mvn clean install -B '-Pall-tests,flyway,checkstyle,!development' && xvfb-run --server-args="-screen 0 1600x1280x24" mvn clean install -B '-Pselenium,!development'
