@@ -37,13 +37,14 @@ jobs:
             cp $GITHUB_WORKSPACE/Kitodo-DataManagement/src/main/resources/db/config/flyway.properties.actions $GITHUB_WORKSPACE/Kitodo-DataManagement/src/main/resources/db/config/flyway.properties
 
       # Runs a set of commands using the runners shell.
-      - name: Start MariaDB
+      - name: Start services
         run: |
+            brew services
             brew services start mariadb
+            brew services start selenium-server
             brew services
       - name: Check MariaDB version
         run: |
-            brew services
             mariadb --version
       - name: Create and setup database
         run: |
@@ -56,10 +57,10 @@ jobs:
       - name: Import default
         run: |
             mariadb kitodo < $GITHUB_WORKSPACE/Kitodo/setup/default.sql
-      - name: Check java version
+      - name: Check Java version
         run: |
             java --version
-      - name: Check maven version
+      - name: Check Maven version
         run: |
             mvn --version
       - name: Run build
