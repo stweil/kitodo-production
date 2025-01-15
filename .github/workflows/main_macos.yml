@@ -1,0 +1,66 @@
+# This workflow runs a minimum CI test for Kitodo.Production on macOS.
+
+name: CI (macOS)
+
+# Controls when the action will run.
+on:
+  # Allows you to run this workflow manually from the Actions tab.
+  workflow_dispatch:
+    inputs:
+      os:
+        description: 'Operating system'
+        required: true
+        type: choice
+        options:
+          - 'macos-latest'
+
+jobs:
+  build_macos:
+    # The type of runner that the job will run on.
+    runs-on: macos-latest
+    # Steps represent a sequence of tasks that will be executed as part of the job.
+    steps:
+      - name: set up MariaDB, JDK 11 and Tomcat 9
+        run: |
+            brew install imagemagick mariadb openjdk@11 tomcat@9
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it.
+      - uses: actions/checkout@v4
+
+      - name: copy files
+        run: |
+            cp $GITHUB_WORKSPACE/config/database.yml.actions $GITHUB_WORKSPACE/config/database.yml
+            cp $GITHUB_WORKSPACE/Kitodo-DataManagement/src/main/resources/db/config/flyway.properties.actions $GITHUB_WORKSPACE/Kitodo-DataManagement/src/main/resources/db/config/flyway.properties
+
+      # Runs a set of commands using the runners shell.
+      - name: start MariaDB
+        run: |
+            brew services start mariadb
+            brew services
+      - name: check MariaDB version
+        run: |
+            brew services
+            mariadb --version
+      - name: create and setup database
+        run: |
+            brew services
+            mariadb -e 'CREATE DATABASE kitodo;'
+            mariadb -e "CREATE USER 'kitodo'@'localhost' IDENTIFIED BY 'kitodo';"
+            mariadb -e "GRANT ALL ON kitodo.* TO 'kitodo'@'localhost';"
+      - name: import schema
+        run: |
+            mariadb kitodo < $GITHUB_WORKSPACE/Kitodo/setup/schema.sql
+      - name: import default
+        run: |
+            mariadb kitodo < $GITHUB_WORKSPACE/Kitodo/setup/default.sql
+      - name: check java version
+        run: |
+            java --version
+      - name: check maven version
+        run: |
+            mvn --version
+      - name: run build
+        run: |
+            mvn clean install -B '-Pall-tests,flyway,checkstyle,!development' && \
+            mvn clean install -B '-Pselenium,!development'
+            # mvn clean install -B '-Pall-tests,flyway,checkstyle,!development' && xvfb-run --server-args="-screen 0 1600x1280x24" mvn clean install -B '-Pselenium,!development'
