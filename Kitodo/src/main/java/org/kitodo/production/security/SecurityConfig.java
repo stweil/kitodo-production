@@ -22,7 +22,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
 /**
@@ -124,7 +124,7 @@ public class SecurityConfig {
         // more general rules should be at end
         authorizeGeneralPages(http);
 
-        http.addFilterAfter(new SecurityObjectAccessFilter(), FilterSecurityInterceptor.class);
+        http.addFilterAfter(new SecurityObjectAccessFilter(), AuthorizationFilter.class);
 
         handleFormLogin(http);
 
