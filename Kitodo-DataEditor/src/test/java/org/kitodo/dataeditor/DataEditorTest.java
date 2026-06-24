@@ -43,8 +43,12 @@ public class DataEditorTest {
 
     @AfterEach
     public void revertFile() throws IOException {
-        IOUtils.write( testMetaOldFormat, Files.newOutputStream(Paths.get(pathOfOldMetaFormat)));
-        IOUtils.write( testmetaUnsupportedFormat, Files.newOutputStream(Paths.get("src/test/resources/testmetaUnsupportedFormat.xml")));
+        try (var out1 = Files.newOutputStream(Paths.get(pathOfOldMetaFormat))) {
+            IOUtils.write(testMetaOldFormat, out1);
+        }
+        try (var out2 = Files.newOutputStream(Paths.get("src/test/resources/testmetaUnsupportedFormat.xml"))) {
+            IOUtils.write(testmetaUnsupportedFormat, out2);
+        }
     }
 
     @Test
