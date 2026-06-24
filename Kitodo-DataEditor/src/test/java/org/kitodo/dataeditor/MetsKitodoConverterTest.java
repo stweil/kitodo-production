@@ -50,6 +50,7 @@ public class MetsKitodoConverterTest {
             IOUtils.write(testMetaOldFormat, out);
         }
     }
+    }
 
     @Test
     public void shouldReadKitodoMetadataFormOldFormatFile() throws JAXBException, TransformerException, IOException {
