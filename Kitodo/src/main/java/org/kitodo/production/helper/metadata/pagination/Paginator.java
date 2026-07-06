@@ -35,7 +35,7 @@ public class Paginator implements Iterator<String> {
      */
     private HalfInteger value;
 
-private void parse(String initializer) {
+    private void parse(String initializer) {
         StringBuilder stringBuilder = new StringBuilder();
         PaginatorState paginatorState = PaginatorState.EMPTY;
         Boolean page = null;
@@ -90,17 +90,10 @@ private void parse(String initializer) {
                 paginatorState = PaginatorState.EMPTY;
             }
             page = codePointClass.equals(PaginatorState.HALF_INTEGER);
-        } else if (paginatorState.equals(codePointClass) || paginatorState.equals(PaginatorState.EMPTY)
-                || paginatorState.equals(PaginatorState.TEXT) && codePointClass.equals(PaginatorState.SYMBOL)
-                || paginatorState.equals(PaginatorState.SYMBOL) && codePointClass.equals(PaginatorState.TEXT)) {
+        } else if (isSameTypeOrTextSymbolMix(paginatorState, codePointClass)) {
             stringBuilder.appendCodePoint(codePoint);
             paginatorState = codePointClass;
-        } else if (paginatorState.equals(PaginatorState.TEXT)
-                && (codePointClass.equals(PaginatorState.LOWERCASE_ROMAN)
-                        || codePointClass.equals(PaginatorState.UPPERCASE_ROMAN))
-                || (paginatorState.equals(PaginatorState.LOWERCASE_ROMAN)
-                        || paginatorState.equals(PaginatorState.UPPERCASE_ROMAN))
-                        && codePointClass.equals(PaginatorState.TEXT)) {
+        } else if (isTextRomanTransition(paginatorState, codePointClass)) {
             stringBuilder.appendCodePoint(codePoint);
             paginatorState = PaginatorState.TEXT;
         } else {
@@ -110,6 +103,21 @@ private void parse(String initializer) {
             paginatorState = codePointClass;
         }
         return new ParsingResult(offset + Character.charCount(codePoint), paginatorState, page);
+    }
+
+    private boolean isSameTypeOrTextSymbolMix(PaginatorState paginatorState, PaginatorState codePointClass) {
+        return paginatorState.equals(codePointClass) || paginatorState.equals(PaginatorState.EMPTY)
+                || paginatorState.equals(PaginatorState.TEXT) && codePointClass.equals(PaginatorState.SYMBOL)
+                || paginatorState.equals(PaginatorState.SYMBOL) && codePointClass.equals(PaginatorState.TEXT);
+    }
+
+    private boolean isTextRomanTransition(PaginatorState paginatorState, PaginatorState codePointClass) {
+        return paginatorState.equals(PaginatorState.TEXT)
+                && (codePointClass.equals(PaginatorState.LOWERCASE_ROMAN)
+                        || codePointClass.equals(PaginatorState.UPPERCASE_ROMAN))
+                || (paginatorState.equals(PaginatorState.LOWERCASE_ROMAN)
+                        || paginatorState.equals(PaginatorState.UPPERCASE_ROMAN))
+                        && codePointClass.equals(PaginatorState.TEXT);
     }
 
     private record ParsingResult(int newOffset, PaginatorState paginatorState, Boolean page) {
