@@ -51,15 +51,8 @@ public class Paginator implements Iterator<String> {
 
     private ParsingResult processCodePoint(String initializer, int length, int offset,
             StringBuilder stringBuilder, PaginatorState paginatorState, Boolean page) {
-        int codePoint;
-        PaginatorState codePointClass;
-        if (offset == length) {
-            codePointClass = PaginatorState.END;
-            codePoint = 0;
-        } else {
-            codePoint = initializer.codePointAt(offset);
-            codePointClass = codePointClassOf(codePoint);
-        }
+        int codePoint = (offset == length) ? 0 : initializer.codePointAt(offset);
+        PaginatorState codePointClass = (offset == length) ? PaginatorState.END : codePointClassOf(codePoint);
 
         if (codePointClass.equals(PaginatorState.TEXT_ESCAPE_TRANSITION)) {
             if (paginatorState.equals(PaginatorState.EMPTY)) {
