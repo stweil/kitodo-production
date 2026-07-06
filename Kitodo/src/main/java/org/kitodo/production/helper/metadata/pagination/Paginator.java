@@ -69,25 +69,13 @@ public class Paginator implements Iterator<String> {
         PaginatorState paginatorState = parsingState.state;
         Boolean page = parsingState.page;
         if (codePointClass.equals(PaginatorState.TEXT_ESCAPE_TRANSITION)) {
-            if (paginatorState.equals(PaginatorState.EMPTY)) {
-                paginatorState = PaginatorState.TEXT_ESCAPE_TRANSITION;
-            } else {
-                createFragment(stringBuilder, paginatorState, page);
-                page = null;
-                paginatorState = paginatorState.equals(PaginatorState.TEXT_ESCAPE_TRANSITION) ? PaginatorState.EMPTY
-                        : PaginatorState.TEXT_ESCAPE_TRANSITION;
-            }
+            paginatorState = handleEscapeTransition(paginatorState, stringBuilder, page);
+            page = null;
         } else if (paginatorState.equals(PaginatorState.TEXT_ESCAPE_TRANSITION)) {
             stringBuilder.appendCodePoint(codePoint);
         } else if (codePointClass.equals(PaginatorState.ALPHABETIC)) {
-            if (paginatorState.equals(PaginatorState.EMPTY)) {
-                paginatorState = PaginatorState.ALPHABETIC;
-            } else {
-                createFragment(stringBuilder, paginatorState, page);
-                page = null;
-                paginatorState = paginatorState.equals(PaginatorState.ALPHABETIC) ? PaginatorState.EMPTY
-                        : PaginatorState.ALPHABETIC;
-            }
+            paginatorState = handleAlphabeticTransition(paginatorState, stringBuilder, page);
+            page = null;
         } else if (paginatorState.equals(PaginatorState.ALPHABETIC)) {
             stringBuilder.appendCodePoint(codePoint);
         } else if (codePointClass.equals(PaginatorState.HALF_INTEGER)
@@ -117,6 +105,28 @@ public class Paginator implements Iterator<String> {
             paginatorState = codePointClass;
         }
         return new ParsingState(paginatorState, page);
+    }
+
+    private PaginatorState handleEscapeTransition(PaginatorState paginatorState, StringBuilder stringBuilder,
+            Boolean page) {
+        if (paginatorState.equals(PaginatorState.EMPTY)) {
+            return PaginatorState.TEXT_ESCAPE_TRANSITION;
+        } else {
+            createFragment(stringBuilder, paginatorState, page);
+            return paginatorState.equals(PaginatorState.TEXT_ESCAPE_TRANSITION) ? PaginatorState.EMPTY
+                    : PaginatorState.TEXT_ESCAPE_TRANSITION;
+        }
+    }
+
+    private PaginatorState handleAlphabeticTransition(PaginatorState paginatorState, StringBuilder stringBuilder,
+            Boolean page) {
+        if (paginatorState.equals(PaginatorState.EMPTY)) {
+            return PaginatorState.ALPHABETIC;
+        } else {
+            createFragment(stringBuilder, paginatorState, page);
+            return paginatorState.equals(PaginatorState.ALPHABETIC) ? PaginatorState.EMPTY
+                    : PaginatorState.ALPHABETIC;
+        }
     }
 
     /**
