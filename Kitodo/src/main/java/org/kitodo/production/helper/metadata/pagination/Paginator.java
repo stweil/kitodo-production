@@ -35,16 +35,19 @@ public class Paginator implements Iterator<String> {
      */
     private HalfInteger value;
 
+    private class ParsingState {
+        PaginatorState state;
+        Boolean page;
+
+        ParsingState(PaginatorState state, Boolean page) {
+            this.state = state;
+            this.page = page;
+        }
+    }
+
     private void parse(String initializer) {
-
         StringBuilder stringBuilder = new StringBuilder();
-        PaginatorState paginatorState = PaginatorState.EMPTY;
-
-        /*
-         * iterate through the code points of the initializer string plus one more
-         * iteration to process the last content of the stringBuilder
-         */
-        Boolean page = null;
+        ParsingState parsingState = new ParsingState(PaginatorState.EMPTY, null);
         int length = initializer.length();
         for (int offset = 0; offset <= length;) {
             int codePoint;
@@ -56,80 +59,64 @@ public class Paginator implements Iterator<String> {
                 codePoint = initializer.codePointAt(offset);
                 codePointClass = codePointClassOf(codePoint);
             }
-
-            // Whatever is in back-ticks is not interpreted
-            if (codePointClass.equals(PaginatorState.TEXT_ESCAPE_TRANSITION)) {
-                if (paginatorState.equals(PaginatorState.EMPTY)) {
-                    paginatorState = PaginatorState.TEXT_ESCAPE_TRANSITION;
-                } else {
-                    createFragment(stringBuilder, paginatorState, page);
-                    page = null;
-                    paginatorState = paginatorState.equals(PaginatorState.TEXT_ESCAPE_TRANSITION) ? PaginatorState.EMPTY
-                            : PaginatorState.TEXT_ESCAPE_TRANSITION;
-                }
-            } else if (paginatorState.equals(PaginatorState.TEXT_ESCAPE_TRANSITION)) {
-                stringBuilder.appendCodePoint(codePoint);
-            } else if (codePointClass.equals(PaginatorState.ALPHABETIC)) {
-                if (paginatorState.equals(PaginatorState.EMPTY)) {
-                    paginatorState = PaginatorState.ALPHABETIC;
-                } else {
-                    createFragment(stringBuilder, paginatorState, page);
-                    page = null;
-                    paginatorState = paginatorState.equals(PaginatorState.ALPHABETIC) ? PaginatorState.EMPTY
-                            : PaginatorState.ALPHABETIC;
-                }
-            } else if (paginatorState.equals(PaginatorState.ALPHABETIC)) {
-                stringBuilder.appendCodePoint(codePoint);
-            } else if (codePointClass.equals(PaginatorState.HALF_INTEGER)
-                    || codePointClass.equals(PaginatorState.FULL_INTEGER)) {
-                /*
-                 * Recto/verso-only symbols cause a stringBuilder write (or they would be
-                 * applied to the current stringBuilder content (modify their left side), but
-                 * they shall be applied on the next write (modify their right side)). They set
-                 * the page variable and are not written to the stringBuilder by themselves.
-                 */
-                if (!paginatorState.equals(PaginatorState.EMPTY)) {
-                    createFragment(stringBuilder, paginatorState, page);
-                    paginatorState = PaginatorState.EMPTY;
-                }
-                page = codePointClass.equals(PaginatorState.HALF_INTEGER);
-            } else if (paginatorState.equals(codePointClass) || paginatorState.equals(PaginatorState.EMPTY)
-                    || paginatorState.equals(PaginatorState.TEXT) && codePointClass.equals(PaginatorState.SYMBOL)
-                    || paginatorState.equals(PaginatorState.SYMBOL) && codePointClass.equals(PaginatorState.TEXT)) {
-                /*
-                 * If the stringBuilder is empty or contains the same sort of content as the
-                 * current input, just write it to the stringBuilder. If the stringBuilder
-                 * contains text, we can write symbols as well, the same is true the other way
-                 * ‘round.
-                 */
-                stringBuilder.appendCodePoint(codePoint);
-                paginatorState = codePointClass;
-
-            } else if (paginatorState.equals(PaginatorState.TEXT)
-                    && (codePointClass.equals(PaginatorState.LOWERCASE_ROMAN)
-                            || codePointClass.equals(PaginatorState.UPPERCASE_ROMAN))
-                    || (paginatorState.equals(PaginatorState.LOWERCASE_ROMAN)
-                            || paginatorState.equals(PaginatorState.UPPERCASE_ROMAN))
-                            && codePointClass.equals(PaginatorState.TEXT)) {
-                /*
-                 * If we got text, and the content of the stringBuilder is a Roman numeral, or
-                 * the other way round, we can still write to the stringBuilder, but the result
-                 * of the operation is always text. This is an important catch in order to, for
-                 * example, prevent the C in ‘Chapter’ start counting. (Remember, Roman numeral
-                 * C is 100.)
-                 */
-                stringBuilder.appendCodePoint(codePoint);
-                paginatorState = PaginatorState.TEXT;
-
-            } else {
-                // In any other case, we have to write out the stringBuilder.
-                createFragment(stringBuilder, paginatorState, page);
-                page = null;
-                stringBuilder.appendCodePoint(codePoint);
-                paginatorState = codePointClass;
-            }
+            parsingState = processCodePoint(stringBuilder, parsingState, codePoint, codePointClass);
             offset += Character.charCount(codePoint);
         }
+    }
+
+    private ParsingState processCodePoint(StringBuilder stringBuilder, ParsingState parsingState,
+            int codePoint, PaginatorState codePointClass) {
+        PaginatorState paginatorState = parsingState.state;
+        Boolean page = parsingState.page;
+        if (codePointClass.equals(PaginatorState.TEXT_ESCAPE_TRANSITION)) {
+            if (paginatorState.equals(PaginatorState.EMPTY)) {
+                paginatorState = PaginatorState.TEXT_ESCAPE_TRANSITION;
+            } else {
+                createFragment(stringBuilder, paginatorState, page);
+                page = null;
+                paginatorState = paginatorState.equals(PaginatorState.TEXT_ESCAPE_TRANSITION) ? PaginatorState.EMPTY
+                        : PaginatorState.TEXT_ESCAPE_TRANSITION;
+            }
+        } else if (paginatorState.equals(PaginatorState.TEXT_ESCAPE_TRANSITION)) {
+            stringBuilder.appendCodePoint(codePoint);
+        } else if (codePointClass.equals(PaginatorState.ALPHABETIC)) {
+            if (paginatorState.equals(PaginatorState.EMPTY)) {
+                paginatorState = PaginatorState.ALPHABETIC;
+            } else {
+                createFragment(stringBuilder, paginatorState, page);
+                page = null;
+                paginatorState = paginatorState.equals(PaginatorState.ALPHABETIC) ? PaginatorState.EMPTY
+                        : PaginatorState.ALPHABETIC;
+            }
+        } else if (paginatorState.equals(PaginatorState.ALPHABETIC)) {
+            stringBuilder.appendCodePoint(codePoint);
+        } else if (codePointClass.equals(PaginatorState.HALF_INTEGER)
+                || codePointClass.equals(PaginatorState.FULL_INTEGER)) {
+            if (!paginatorState.equals(PaginatorState.EMPTY)) {
+                createFragment(stringBuilder, paginatorState, page);
+                paginatorState = PaginatorState.EMPTY;
+            }
+            page = codePointClass.equals(PaginatorState.HALF_INTEGER);
+        } else if (paginatorState.equals(codePointClass) || paginatorState.equals(PaginatorState.EMPTY)
+                || paginatorState.equals(PaginatorState.TEXT) && codePointClass.equals(PaginatorState.SYMBOL)
+                || paginatorState.equals(PaginatorState.SYMBOL) && codePointClass.equals(PaginatorState.TEXT)) {
+            stringBuilder.appendCodePoint(codePoint);
+            paginatorState = codePointClass;
+        } else if (paginatorState.equals(PaginatorState.TEXT)
+                && (codePointClass.equals(PaginatorState.LOWERCASE_ROMAN)
+                        || codePointClass.equals(PaginatorState.UPPERCASE_ROMAN))
+                || (paginatorState.equals(PaginatorState.LOWERCASE_ROMAN)
+                        || paginatorState.equals(PaginatorState.UPPERCASE_ROMAN))
+                        && codePointClass.equals(PaginatorState.TEXT)) {
+            stringBuilder.appendCodePoint(codePoint);
+            paginatorState = PaginatorState.TEXT;
+        } else {
+            createFragment(stringBuilder, paginatorState, page);
+            page = null;
+            stringBuilder.appendCodePoint(codePoint);
+            paginatorState = codePointClass;
+        }
+        return new ParsingState(paginatorState, page);
     }
 
     /**
