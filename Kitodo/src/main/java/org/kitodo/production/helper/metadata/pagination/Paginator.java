@@ -35,47 +35,52 @@ public class Paginator implements Iterator<String> {
      */
     private HalfInteger value;
 
-    private class ParsingState {
-        PaginatorState state;
-        Boolean page;
-
-        ParsingState(PaginatorState state, Boolean page) {
-            this.state = state;
-            this.page = page;
-        }
-    }
-
-    private void parse(String initializer) {
+private void parse(String initializer) {
         StringBuilder stringBuilder = new StringBuilder();
-        ParsingState parsingState = new ParsingState(PaginatorState.EMPTY, null);
+        PaginatorState paginatorState = PaginatorState.EMPTY;
+        Boolean page = null;
         int length = initializer.length();
-        for (int offset = 0; offset <= length;) {
-            int codePoint;
-            PaginatorState codePointClass;
-            if (offset == length) {
-                codePointClass = PaginatorState.END;
-                codePoint = 0;
-            } else {
-                codePoint = initializer.codePointAt(offset);
-                codePointClass = codePointClassOf(codePoint);
-            }
-            parsingState = processCodePoint(stringBuilder, parsingState, codePoint, codePointClass);
-            offset += Character.charCount(codePoint);
+        int offset = 0;
+        while (offset <= length) {
+            ParsingResult result = processCodePoint(initializer, length, offset, stringBuilder, paginatorState, page);
+            offset = result.newOffset;
+            paginatorState = result.paginatorState();
+            page = result.page();
         }
     }
 
-    private ParsingState processCodePoint(StringBuilder stringBuilder, ParsingState parsingState,
-            int codePoint, PaginatorState codePointClass) {
-        PaginatorState paginatorState = parsingState.state;
-        Boolean page = parsingState.page;
+    private ParsingResult processCodePoint(String initializer, int length, int offset,
+            StringBuilder stringBuilder, PaginatorState paginatorState, Boolean page) {
+        int codePoint;
+        PaginatorState codePointClass;
+        if (offset == length) {
+            codePointClass = PaginatorState.END;
+            codePoint = 0;
+        } else {
+            codePoint = initializer.codePointAt(offset);
+            codePointClass = codePointClassOf(codePoint);
+        }
+
         if (codePointClass.equals(PaginatorState.TEXT_ESCAPE_TRANSITION)) {
-            paginatorState = handleEscapeTransition(paginatorState, stringBuilder, page);
-            page = null;
+            if (paginatorState.equals(PaginatorState.EMPTY)) {
+                paginatorState = PaginatorState.TEXT_ESCAPE_TRANSITION;
+            } else {
+                createFragment(stringBuilder, paginatorState, page);
+                page = null;
+                paginatorState = paginatorState.equals(PaginatorState.TEXT_ESCAPE_TRANSITION) ? PaginatorState.EMPTY
+                        : PaginatorState.TEXT_ESCAPE_TRANSITION;
+            }
         } else if (paginatorState.equals(PaginatorState.TEXT_ESCAPE_TRANSITION)) {
             stringBuilder.appendCodePoint(codePoint);
         } else if (codePointClass.equals(PaginatorState.ALPHABETIC)) {
-            paginatorState = handleAlphabeticTransition(paginatorState, stringBuilder, page);
-            page = null;
+            if (paginatorState.equals(PaginatorState.EMPTY)) {
+                paginatorState = PaginatorState.ALPHABETIC;
+            } else {
+                createFragment(stringBuilder, paginatorState, page);
+                page = null;
+                paginatorState = paginatorState.equals(PaginatorState.ALPHABETIC) ? PaginatorState.EMPTY
+                        : PaginatorState.ALPHABETIC;
+            }
         } else if (paginatorState.equals(PaginatorState.ALPHABETIC)) {
             stringBuilder.appendCodePoint(codePoint);
         } else if (codePointClass.equals(PaginatorState.HALF_INTEGER)
@@ -104,29 +109,10 @@ public class Paginator implements Iterator<String> {
             stringBuilder.appendCodePoint(codePoint);
             paginatorState = codePointClass;
         }
-        return new ParsingState(paginatorState, page);
+        return new ParsingResult(offset + Character.charCount(codePoint), paginatorState, page);
     }
 
-    private PaginatorState handleEscapeTransition(PaginatorState paginatorState, StringBuilder stringBuilder,
-            Boolean page) {
-        if (paginatorState.equals(PaginatorState.EMPTY)) {
-            return PaginatorState.TEXT_ESCAPE_TRANSITION;
-        } else {
-            createFragment(stringBuilder, paginatorState, page);
-            return paginatorState.equals(PaginatorState.TEXT_ESCAPE_TRANSITION) ? PaginatorState.EMPTY
-                    : PaginatorState.TEXT_ESCAPE_TRANSITION;
-        }
-    }
-
-    private PaginatorState handleAlphabeticTransition(PaginatorState paginatorState, StringBuilder stringBuilder,
-            Boolean page) {
-        if (paginatorState.equals(PaginatorState.EMPTY)) {
-            return PaginatorState.ALPHABETIC;
-        } else {
-            createFragment(stringBuilder, paginatorState, page);
-            return paginatorState.equals(PaginatorState.ALPHABETIC) ? PaginatorState.EMPTY
-                    : PaginatorState.ALPHABETIC;
-        }
+    private record ParsingResult(int newOffset, PaginatorState paginatorState, Boolean page) {
     }
 
     /**
