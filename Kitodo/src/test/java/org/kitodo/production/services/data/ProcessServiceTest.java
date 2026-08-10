@@ -11,7 +11,14 @@
 
 package org.kitodo.production.services.data;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.net.URI;
 import java.text.ParseException;
@@ -23,7 +30,10 @@ import java.util.Objects;
 import org.junit.jupiter.api.Test;
 import org.kitodo.data.database.beans.Process;
 import org.kitodo.data.database.beans.Property;
+import org.kitodo.production.helper.WebDav;
 import org.kitodo.production.services.ServiceManager;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 public class ProcessServiceTest {
 
@@ -111,5 +121,17 @@ public class ProcessServiceTest {
         URI uri = URI.create("database://?process.id=42");
         int processId = ServiceManager.getProcessService().processIdFromUri(uri);
         assertEquals(42, processId);
+    }
+
+    @Test
+    public void testDownloadToHomeShouldNotFailForNotExistingProcess() throws Exception {
+        try (MockedStatic<ServiceManager> serviceManagerMockedStatic = Mockito.mockStatic(ServiceManager.class)) {
+            ProcessService processService = mock(ProcessService.class);
+            when(processService.getById(1)).thenReturn(null);
+            serviceManagerMockedStatic.when(ServiceManager::getProcessService).thenReturn(processService);
+            WebDav webDav = mock(WebDav.class);
+            assertDoesNotThrow(() -> ProcessService.downloadToHome(webDav, 1));
+            verify(webDav, never()).downloadToHome(any(), anyBoolean());
+        }
     }
 }
