@@ -20,13 +20,18 @@ import static com.xebialabs.restito.semantics.Condition.parameter;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.xebialabs.restito.server.StubServer;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -48,6 +53,7 @@ import org.kitodo.api.schemaconverter.MetadataFormat;
 import org.kitodo.exceptions.NoRecordFoundException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -59,6 +65,9 @@ public class QueryURLImportTest {
     private static final String RECORD_ID = "1";
     private static final String RECORD_IDENTIFIER = "recordIdentifier";
     private static final String RECORD_IDENTIFIER_VALUE = "12345";
+    private static final String VALID_XML = "<root><child>text</child></root>";
+    private static final String XML_WITH_DOCTYPE = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            + "<!DOCTYPE root [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]>\n<root>&xxe;</root>";
     private static DataImport dataImport;
     private static final int PORT = 8888;
     private static final String SRU = "SRU";
@@ -84,6 +93,40 @@ public class QueryURLImportTest {
         assertEquals(1, recordIdentifierNodeList.getLength(), "Wrong number of record identifiers found!");
         Element recordIdentifierElement = (Element) recordIdentifierNodeList.item(0);
         assertEquals(RECORD_IDENTIFIER_VALUE, recordIdentifierElement.getTextContent(), "Wrong record identifier found!");
+    }
+
+    @Test
+    public void stringToDocumentShouldParseValidXml() throws Exception {
+        QueryURLImport queryURLImport = new QueryURLImport();
+        Method stringToDocument = QueryURLImport.class.getDeclaredMethod("stringToDocument", String.class);
+        stringToDocument.setAccessible(true);
+        Document document = (Document) stringToDocument.invoke(queryURLImport, VALID_XML);
+        assertNotNull(document);
+        assertEquals("root", document.getDocumentElement().getNodeName(), "Wrong root element found!");
+    }
+
+    @Test
+    public void stringToDocumentShouldRejectDocTypeDeclaration() throws Exception {
+        QueryURLImport queryURLImport = new QueryURLImport();
+        Method stringToDocument = QueryURLImport.class.getDeclaredMethod("stringToDocument", String.class);
+        stringToDocument.setAccessible(true);
+        InvocationTargetException exception = assertThrows(InvocationTargetException.class,
+                () -> stringToDocument.invoke(queryURLImport, XML_WITH_DOCTYPE));
+        assertInstanceOf(SAXException.class, exception.getCause(),
+                "DOCTYPE declarations must be rejected when parsing XML");
+    }
+
+    @Test
+    public void nodeToStringShouldSerializeNode() throws Exception {
+        QueryURLImport queryURLImport = new QueryURLImport();
+        Method stringToDocument = QueryURLImport.class.getDeclaredMethod("stringToDocument", String.class);
+        stringToDocument.setAccessible(true);
+        Method nodeToString = QueryURLImport.class.getDeclaredMethod("nodeToString", Node.class);
+        nodeToString.setAccessible(true);
+        Document document = (Document) stringToDocument.invoke(queryURLImport, VALID_XML);
+        String result = (String) nodeToString.invoke(queryURLImport, document.getDocumentElement());
+        assertNotNull(result);
+        assertTrue(result.contains("root"), "Serialized XML must contain the root element");
     }
 
     private static void setupServer(String serverResponse) {
