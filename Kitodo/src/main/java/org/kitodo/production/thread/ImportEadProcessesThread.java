@@ -126,6 +126,7 @@ public class ImportEadProcessesThread extends EmptyTask {
     }
 
     @Override
+    @SuppressWarnings("checkstyle:MethodLength")
     public void run() {
         setAuthenticatedUser();
         List<Integer> newProcessIds = new ArrayList<>();
