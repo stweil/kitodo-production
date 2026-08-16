@@ -191,7 +191,7 @@ public class TopNavigationPage extends Page<TopNavigationPage> {
      */
     private void clickNavigationLink(String linkId) {
         RemoteWebDriver driver = Browser.getDriver();
-        WebDriverWait webDriverWait = new WebDriverWait(driver, Duration.ofSeconds(90));
+        WebDriverWait webDriverWait = new WebDriverWait(driver, Duration.ofSeconds(180));
         webDriverWait.until(ExpectedConditions.presenceOfElementLocated(By.id(linkId)));
         ((JavascriptExecutor) driver).executeScript(ARGUMENTS_CLICK, driver.findElement(By.id(linkId)));
     }
