@@ -12,3 +12,13 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
+
+  # Keep Maven dependencies up to date.
+  - package-ecosystem: "maven"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "maven"
