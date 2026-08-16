@@ -171,6 +171,15 @@ public class ProcessFromTemplatePage extends EditPage<ProcessFromTemplatePage> {
      */
     public List<String> getImportConfigurationsTitles() {
         clickElement(catalogSelect.findElement(By.cssSelector(CSS_SELECTOR_DROPDOWN_TRIGGER)));
+        await("Wait for import configuration titles to be loaded")
+                .pollDelay(500, TimeUnit.MILLISECONDS)
+                .atMost(30, TimeUnit.SECONDS).ignoreExceptions()
+                .until(() -> {
+                    List<WebElement> items = Browser.getDriver()
+                            .findElement(By.id("catalogSearchForm:catalogueSelectMenu_items"))
+                            .findElements(By.className("ui-selectonemenu-list-item"));
+                    return !items.isEmpty() && items.stream().allMatch(item -> !item.getText().isEmpty());
+                });
         WebElement selectMenuItems = Browser.getDriver().findElement(By.id("catalogSearchForm:catalogueSelectMenu_items"));
         return selectMenuItems.findElements(By.className("ui-selectonemenu-list-item"))
                 .stream().map(WebElement::getText).collect(Collectors.toList());
