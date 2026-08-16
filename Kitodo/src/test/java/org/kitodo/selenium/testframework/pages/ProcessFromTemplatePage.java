@@ -392,7 +392,7 @@ public class ProcessFromTemplatePage extends EditPage<ProcessFromTemplatePage> {
      * @param index index of checkbox to click
      */
     public void selectCheckBox(int index) {
-        metadataTable.findElements(By.className("ui-chkbox-icon")).get(index).click();
+        clickElement(metadataTable.findElements(By.className("ui-chkbox-box")).get(index));
     }
 
     /**
