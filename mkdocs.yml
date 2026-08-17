@@ -40,5 +40,40 @@ nav:
         - 'Aufgaben': 'user/introduction/tasks.md'
         - 'Laufzettel': 'user/introduction/processslip.md'
         - 'Homeverzeichnis': 'user/introduction/homedirectory.md'
-theme: mkdocs
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - content.codecopy
+    - toc.follow
+  palette:
+    - scheme: default
+      primary: blue
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+plugins:
+  - search:
+      lang:
+        - en
+        - de
+markdown_extensions:
+  - abbr
+  - attr_list
+  - def_list
+  - tables
+  - toc:
+      toc_depth: 3
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
 repo_url: https://github.com/kitodo/kitodo-production
