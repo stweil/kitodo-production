@@ -19,7 +19,7 @@ Es sollte jedoch auch bedacht werden, dass viele Projekte den Verwaltungsaufwand
 <center><img src= "../pictures/EingabeNeuesProjekt.png" alt="Bild" width= 75% height= auto></center>
 </li>
 <li> Wählen Sie eine Produktionsvorlage aus, indem Sie auf den Button "<b>Produktionsvorlage auswählen</b>" klicken.
-<center><img src= "../pictures/ProjektProduktionsvorlageHinzufügen.png" alt="Bild" width= 75% height= auto></center>
+<center><img src= "../pictures/ProjektProduktionsvorlageHinzufügen.png" alt="Bild" width= 75% height= auto></center>
 <li> Klicken Sie anschließend auf "<b>Speichern</b>". </li>
 <img src= "../pictures/NeuesProjektSpeichern.png" alt="Bild">
 <li> Das neu angelegte Projekt erscheint nun auf der Seite <i>Projekte</i> in der <i>Projektliste</i>.
