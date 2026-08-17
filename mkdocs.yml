@@ -9,7 +9,7 @@ nav:
         - 'Build development version': 'developer/gettingstarted/development-version.md'
         - 'Eclipse on Windows': 'developer/gettingstarted/eclipse-windows.md'
         - 'Create VirtualBox Appliance': 'developer/gettingstarted/virtualbox.md'
-        - 'Use MariaDB instead of MySQL': 'developer/gettingstarted/use-mariadb.md'
+        - 'Use MariaDB (recommended)': 'developer/gettingstarted/use-mariadb.md'
         - 'Securing access to ActiveMQ': 'developer/gettingstarted/use-secured-activemq.md'
     - 'Guidelines': 'developer/guidelines/README.md'
     - 'System architecture': 'developer/architecture/README.md'
