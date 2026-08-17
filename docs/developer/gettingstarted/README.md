@@ -1,6 +1,6 @@
 # Building
 
-Kitodo.Production is written in Java 21 and uses the [Jakarta Server Faces](https://jakarta.ee/specifications/server-pages/) web technology to run on a [Tomcat 10 Servlet container](https://tomcat.apache.org/). It is backed by a [MySQL](https://www.mysql.com/) (or [MariaDB](use-mariadb.md)) database, accessed through the [Hibernate](https://hibernate.org/orm/) Object-Relational Mapping framework, and by an [OpenSearch](https://opensearch.org/) server for full-text search, accessed through [Hibernate Search](https://hibernate.org/search/).
+Kitodo.Production is written in Java 21 and uses the [Jakarta Server Faces](https://jakarta.ee/specifications/server-pages/) web technology to run on a [Tomcat 10 Servlet container](https://tomcat.apache.org/). It is backed by a [MariaDB](https://mariadb.org/) (or [MySQL](https://www.mysql.com/)) database, accessed through the [Hibernate](https://hibernate.org/orm/) Object-Relational Mapping framework, and by an [OpenSearch](https://opensearch.org/) server for full-text search, accessed through [Hibernate Search](https://hibernate.org/search/).
 
 The project structure is IDE independent. The tool for building, testing and packaging the application is [Apache Maven](https://maven.apache.org/).
 
@@ -8,7 +8,7 @@ The project structure is IDE independent. The tool for building, testing and pac
 
 * [Java SE Development Kit (JDK) 21](https://adoptium.net/temurin/releases/) (e.g. [Eclipse Temurin](https://adoptium.net/temurin/releases/))
 * [Apache Maven](https://maven.apache.org/download.cgi)
-* For local database development: [MySQL 8.x](https://dev.mysql.com/downloads/mysql/) or [MariaDB](https://mariadb.org/download/)
+* For local database development: [MariaDB](https://mariadb.org/download/) (recommended) or [MySQL 8.x](https://dev.mysql.com/downloads/mysql/)
 * For full-text search: an [OpenSearch](https://opensearch.org/downloads/) 2.x server (except for the [demo mode](demo.md), which runs an embedded in-memory OpenSearch node)
 
 ## Modules
@@ -137,7 +137,7 @@ script_deleteSymLink=/path/to/scripts/script_deleteSymLink.sh
 * [Build development version](development-version.md)
 * [Eclipse on Windows](eclipse-windows.md)
 * [Create VirtualBox Appliance](virtualbox.md)
-* [Use MariaDB instead of MySQL](use-mariadb.md)
+* [Use MariaDB (recommended)](use-mariadb.md)
 * [Securing access to ActiveMQ](use-secured-activemq.md)
 
 Setting up a Kitodo instance can be quite tricky. For more help on how to configure Kitodo, please check the [GitHub Wiki](https://github.com/kitodo/kitodo-production/wiki) or ask questions on the [mailing lists](https://github.com/kitodo/kitodo-production/wiki#Mailingliste).
