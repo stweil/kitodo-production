@@ -2,7 +2,7 @@
 
 Kitodo.Production is the workflow management module of the [Kitodo Digital Library Suite](https://www.kitodo.org) for mass digitization.
 
-This documentation is published at <https://stweil.github.io/kitodo-production/> and maintained in the [`docs/` directory](https://github.com/stweil/kitodo-production/tree/main/docs) of the [Kitodo.Production repository](https://github.com/kitodo/kitodo-production).
+This documentation is published at <https://stweil.github.io/kitodo-production/> and maintained with [MkDocs](https://www.mkdocs.org/) in the [`docs/` directory](https://github.com/stweil/kitodo-production/tree/main/docs) of the [Kitodo.Production repository](https://github.com/kitodo/kitodo-production).
 
 ## Sections
 
@@ -17,3 +17,10 @@ This documentation is published at <https://stweil.github.io/kitodo-production/>
 * [Kitodo. Key to digital objects e. V.](https://www.kitodo.org)
 
 This documentation is work in progress and may be incomplete or outdated. Please help by filing an issue or sending a pull request.
+
+To build the site locally:
+
+```
+pip install -r requirements.txt
+mkdocs serve
+```

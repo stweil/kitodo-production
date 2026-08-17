@@ -1,0 +1,5 @@
+# Build the documentation with:
+#   pip install -r requirements.txt
+#   mkdocs build        (or: mkdocs serve for local preview)
+mkdocs>=1.6,<2
+mkdocs-material>=9.5
