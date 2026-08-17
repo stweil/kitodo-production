@@ -1,6 +1,8 @@
-# Use MariaDB instead of MySQL
+# Use MariaDB (recommended)
 
-Kitodo.Production runs on MariaDB out of the box (the MariaDB JDBC driver is part of the build). To use a MariaDB server instead of a MySQL server, adjust the Hibernate and Flyway configuration.
+[MariaDB](https://mariadb.org/) is the recommended database server for Kitodo.Production; the MariaDB JDBC driver is part of the build. The bundled default configuration, however, points at MySQL, so when using a MariaDB server adjust the Hibernate and Flyway configuration as follows.
+
+If you prefer MySQL, you can keep the shipped defaults (`jdbc:mysql://...` URL and the `com.mysql.cj.jdbc.Driver` driver); in that case make sure the database, user and passwords in `hibernate.cfg.xml` and `flyway.properties` match your MySQL server.
 
 ## Hibernate configuration
 

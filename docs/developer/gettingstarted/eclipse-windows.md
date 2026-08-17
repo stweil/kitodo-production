@@ -6,7 +6,7 @@
 * [Git](https://git-scm.com/downloads)
 * [Maven](https://maven.apache.org/download.cgi)
 * [Eclipse IDE for Enterprise Java and Web Developers](https://www.eclipse.org/downloads/)
-* A database server: [MySQL 8.x](https://dev.mysql.com/downloads/mysql/) or [MariaDB](use-mariadb.md)
+* A database server: [MariaDB (recommended, see [Use MariaDB](use-mariadb.md) for the Hibernate/Flyway configuration)](https://mariadb.org/download/) or [MySQL 8.x](https://dev.mysql.com/downloads/mysql/)
 * An [OpenSearch](https://opensearch.org/downloads/) 2.x server (for full-text search; except when using the [demo mode](demo.md))
 
 ## Configure the `PATH`s
@@ -84,7 +84,7 @@ The `development` profile (active by default) reads `config-local/kitodo_config.
 
 ## Set up the database
 
-Create the MySQL database and the user:
+Create the database and the user (MariaDB or MySQL):
 
 ```
 CREATE DATABASE kitodo;
