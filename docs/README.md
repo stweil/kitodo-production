@@ -1,6 +1,13 @@
-# Kitodo.Production Developer Documentation
+# Kitodo.Production Documentation
 
-* Read the docs: <https://kitodo-production.readthedocs.io/en/latest/>
-* GitHub: <https://github.com/kitodo/kitodo-production/tree/main/docs>
+This directory contains the documentation of Kitodo.Production, built with [MkDocs](https://www.mkdocs.org/) (see [`mkdocs.yml`](../mkdocs.yml)) and published at <https://stweil.github.io/kitodo-production/>.
 
-This documentation is work in progress. Please consult the [javadoc](javadoc/README.md) or [contact the developer team](https://maillist.slub-dresden.de/cgi-bin/mailman/listinfo/kitodo-developer) if you have specific questions that are not covered here yet.
+* Developer documentation: [developer/](developer/gettingstarted/README.md)
+* User documentation: [user/](user/introduction/using.md)
+
+To build the site locally:
+
+```
+pip install mkdocs
+mkdocs serve
+```

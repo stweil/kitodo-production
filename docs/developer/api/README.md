@@ -4,5 +4,7 @@ This documentation is work in progress. Please consult the [javadoc](../javadoc/
 
 Below you will find some fragments regarding the APIs of Kitodo.production:
 
-* [Active MQ webservices](activemq_jms_api.md)
-* [Jersey WebAPI](jersey_jaxrs_api.md)
+* [ActiveMQ web services](activemq_jms_api.md) - the JMS based interface for external software
+* [Jersey WebAPI (removed)](jersey_jaxrs_api.md) - the former REST API
+
+Additionally, the module `Kitodo-API` contains the APIs that the Kitodo modules (for example `Kitodo-FileManagement`, `Kitodo-Command`, ...) implement and other Kitodo components can use; see its [javadoc](../javadoc/README.md).

@@ -1,5 +1,21 @@
 # Securing access to ActiveMQ
 
+Kitodo.Production connects to the [ActiveMQ](https://activemq.apache.org/) server using the connection parameters configured in `kitodo_config.properties`:
+
+```
+activeMQ.hostURL=...
+activeMQ.useSSL=false
+activeMQ.keyStore=...
+activeMQ.keyStorePassword=...
+activeMQ.trustStore=...
+activeMQ.trustStorePassword=...
+activeMQ.useAuth=false
+activeMQ.authUsername=...
+activeMQ.authPassword=...
+```
+
+This page describes how to set up the server side accordingly.
+
 ## Using SSL connections
 
 Inspired by https://activemq.apache.org/how-do-i-use-ssl
@@ -107,7 +123,7 @@ Adjust the `conf/activemq.xml` file
                     <authenticationUser username="${activemq.username}" password="${activemq.password}" groups="senders,receivers,admins" />
                     <authenticationUser username="KitodoProductionUser" password="PasswordForUserKitodoProduction" groups="KitodoProductionGroup" />
                     <!-- some example users -->
-                    <authenticationUser username="SomeUserForReadAccess" password="ReadAccessPasswort" groups="receivers" />
+                    <authenticationUser username="SomeUserForReadAccess" password="ReadAccessPassword" groups="receivers" />
                     <authenticationUser username="SomeUserForWriteAccess" password="WriteAccessPasswort" groups="senders" />
                 </users>
             </simpleAuthenticationPlugin>
@@ -129,7 +145,7 @@ Adjust the `conf/activemq.xml` file
     <broker xmlns="http://activemq.apache.org/schema/core" brokerName="localhost" dataDirectory="${activemq.data}">
         <!-- other options -->
         <plugins>
-            <!-- other plugins like simpleAuthentificationPlugin -->
+            <!-- other plugins like simpleAuthenticationPlugin -->
             <authorizationPlugin>
                 <map>
                     <authorizationMap>

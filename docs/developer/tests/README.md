@@ -1,32 +1,38 @@
-Mutation testing
-===============
+# Testing
 
-To measure the quality of our tests, we are using the mutation testing
- framework [Pitest](http://pitest.org/).
+Kitodo.Production uses [JUnit 5](https://junit.org/junit5/) for unit tests. Unit tests of all modules are run by the standard Maven build (`mvn clean install`); integration tests are run with the `all-tests` profile (Failsafe) and the Selenium tests with the `selenium` profile (see [Building](../gettingstarted/README.md)).
 
-Pitest runs your unit tests against automatically modified versions of your application code.
-When the application code changes, it should produce different results and cause the unit
-tests to fail. If a unit test does not fail in this situation, it may indicate an issue
-with the test suite.
+## Mutation testing
 
-To run a mutation test, you have to add the Pitest plugin to build/plugins in your modules pom.xml.
+To measure the quality of the tests, the project uses the mutation testing framework [Pitest](https://pitest.org/).
 
-```
+Pitest runs your unit tests against automatically modified versions of your application code. When the application code changes, it should produce different results and cause the unit tests to fail. If a unit test does not fail in this situation, it may indicate an issue with the test suite.
+
+The [pitest-maven](https://pitest.org/maven/) plugin (version managed by the `pitest.version` property in the root `pom.xml`) is already configured in the module POMs of `Kitodo-Command` and `Kitodo-DataEditor`, limited to the corresponding packages:
+
+```xml
 <plugin>
     <groupId>org.pitest</groupId>
     <artifactId>pitest-maven</artifactId>
-    <version>LATEST</version>
- </plugin>
+    <version>${pitest.version}</version>
+    <configuration>
+        <targetClasses>
+            <param>org.kitodo.command*</param>
+        </targetClasses>
+        <targetTests>
+            <param>org.kitodo.command*</param>
+        </targetTests>
+    </configuration>
+</plugin>
 ```
 
-By default Pitest will mutate all code in your project/module. You can limit which code is mutated
-and which tests are run using `targetClasses` and `targetTests`.
+To add mutation testing to another module, add the plugin to `build/plugins` of the module's `pom.xml` with `targetClasses` and `targetTests` for the packages you want to mutate:
 
-```
+```xml
 <plugin>
     <groupId>org.pitest</groupId>
     <artifactId>pitest-maven</artifactId>
-    <version>LATEST</version>
+    <version>${pitest.version}</version>
     <configuration>
         <targetClasses>
             <param>com.your.package.root.want.to.mutate*</param>
@@ -38,8 +44,10 @@ and which tests are run using `targetClasses` and `targetTests`.
 </plugin>
 ```
 
-The mutation test can be run directly from the commandline 
+The mutation test can be run directly from the command line, for example in the `Kitodo-Command` module:
 
-``mvn org.pitest:pitest-maven:mutationCoverage``
+```
+mvn -pl Kitodo-Command pitest:mutationCoverage
+```
 
-This will output an html report to **target/pit-reports/YYYYMMDDHHMI**.
+This outputs an HTML report to `target/pit-reports` in the module's target directory.
