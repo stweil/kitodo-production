@@ -10,7 +10,7 @@ Kitodo.Production is a Java web application (WAR) that runs on an Apache Tomcat 
 
 * **Frontend**: server-side pages written in [Jakarta Server Faces (JSF)](https://jakarta.ee/specifications/server-pages/) with [PrimeFaces](https://primefaces.org/) components. The backing beans are the *forms* in `org.kitodo.production.forms`.
 * **Business logic**: services in `org.kitodo.production.services`, collected by the central `ServiceManager` (e.g. `ProcessService`, `UserService`, `MetadataService`).
-* **Data layer**: JPA entities in `org.kitodo.data.database.beans` (module `Kitodo-DataManagement`), persisted with [Hibernate ORM](https://hibernate.org/orm/) to a MySQL/MariaDB database and mirrored for full-text search into an [OpenSearch](https://opensearch.org/) index managed by [Hibernate Search](https://hibernate.org/search/).
+* **Data layer**: JPA entities in `org.kitodo.data.database.beans` (module `Kitodo-DataManagement`), persisted with [Hibernate ORM](https://hibernate.org/orm/) to a MariaDB (or MySQL) database and mirrored for full-text search into an [OpenSearch](https://opensearch.org/) index managed by [Hibernate Search](https://hibernate.org/search/).
 * **External integration**: [ActiveMQ](https://activemq.apache.org/) JMS services (see [ActiveMQ web services](../api/activemq_jms_api.md)).
 
 ## Data types

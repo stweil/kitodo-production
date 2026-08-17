@@ -2,16 +2,20 @@
 
 This guide builds the deployment files (WAR, module JARs, SQL dump, configuration archive) from the current `main` branch and deploys them to a server.
 
-It was tested on [Ubuntu 24.04 LTS](https://ubuntu.com/download/server), which is also the environment used by the [GitHub Actions build](https://github.com/kitodo/kitodo-production/blob/main/.github/workflows/main.yml).
+It was tested on [Ubuntu 24.04 LTS](https://ubuntu.com/download/server) and [Debian 13 (trixie)](https://www.debian.org/releases/stable/); the [GitHub Actions build](https://github.com/kitodo/kitodo-production/blob/main/.github/workflows/main.yml) runs on `ubuntu-24.04`.
 
 ## 1. System environment
 
-### Install Java 21, Maven and MySQL
+### Install Java 21, Maven and MariaDB
+
+[MariaDB](https://mariadb.org/) is the recommended database server:
 
 ```
 sudo apt update
-sudo apt install -y openjdk-21-jdk maven mysql-server unzip curl
+sudo apt install -y openjdk-21-jdk maven mariadb-server unzip curl
 ```
+
+To use [MySQL 8.x](https://dev.mysql.com/downloads/mysql/) instead, note that neither current Ubuntu nor Debian provides a `mysql-server` package in the standard repositories; install it from the [MySQL APT repository](https://dev.mysql.com/doc/refman/8.0/en/installing-mysql-using-apt.html).
 
 ### Change Java security config (for cloud environments)
 
@@ -31,27 +35,31 @@ unzip main.zip && rm main.zip
 
 Note: If you want to build a release version, you may want to set the version in the `pom.xml` files before packaging.
 
-### Create MySQL database and user
+### Create MariaDB database and user
 
 Start the database server and create the database and user:
 
 ```
-sudo service mysql start
-sudo mysql -e "CREATE DATABASE kitodo; CREATE USER 'kitodo'@'localhost' IDENTIFIED BY 'kitodo'; GRANT ALL ON kitodo.* TO 'kitodo'@'localhost'; FLUSH PRIVILEGES;"
+sudo service mariadb start
+sudo mariadb -e "CREATE DATABASE kitodo; CREATE USER 'kitodo'@'localhost' IDENTIFIED BY 'kitodo'; GRANT ALL ON kitodo.* TO 'kitodo'@'localhost'; FLUSH PRIVILEGES;"
 ```
+
+When using MySQL instead, start the server the same way and create the database and user with the `mysql` client.
 
 ### Generate SQL dump (schema, default data and Flyway migrations)
 
 Load the schema and the default data, migrate the schema to the current version with [Flyway](https://flywaydb.org/) and dump the result:
 
 ```
-cat kitodo-production-main/Kitodo/setup/schema.sql | mysql -u kitodo -D kitodo --password=kitodo
-cat kitodo-production-main/Kitodo/setup/default.sql | mysql -u kitodo -D kitodo --password=kitodo
+cat kitodo-production-main/Kitodo/setup/schema.sql | mariadb -u kitodo -D kitodo --password=kitodo
+cat kitodo-production-main/Kitodo/setup/default.sql | mariadb -u kitodo -D kitodo --password=kitodo
 (cd kitodo-production-main/Kitodo-DataManagement && mvn flyway:baseline -Pflyway && mvn flyway:migrate -Pflyway)
-mysqldump -u kitodo --password=kitodo kitodo > kitodo-4.sql
+mariadb-dump -u kitodo --password=kitodo kitodo > kitodo-4.sql
 ```
 
-The default Flyway configuration is in `Kitodo-DataManagement/src/main/resources/db/config/flyway.properties` (database `kitodo`, user `kitodo`/`kitodo` at `jdbc:mysql://localhost/kitodo`). Adjust it if your database is elsewhere. See also [Use MariaDB instead of MySQL](use-mariadb.md).
+When using MySQL instead of MariaDB, replace `mariadb` with `mysql` and `mariadb-dump` with `mysqldump`.
+
+The default Flyway configuration is in `Kitodo-DataManagement/src/main/resources/db/config/flyway.properties` (database `kitodo`, user `kitodo`/`kitodo` at `jdbc:mysql://localhost/kitodo`). For a MariaDB server, set `flyway.url=jdbc:mariadb://localhost/kitodo` before running the migration (see [Use MariaDB](use-mariadb.md)); adjust it likewise if your database is elsewhere.
 
 ### Create zip archive with directories and config files
 
@@ -93,10 +101,25 @@ sudo apt install -y tomcat10 imagemagick
 
 ### Add the OpenSearch 2.x repository and install OpenSearch
 
+Add the [OpenSearch 2.x repository](https://opensearch.org/docs/install-and-configure/opensearch-repositories/) matching your distribution:
+
+For Ubuntu 24.04:
+
 ```
-sudo apt install -y apt-transport-https wget
 wget -qO - https://artifacts.opensearch.org/publickey | sudo gpg --dearmor -o /usr/share/keyrings/opensearch.key
 echo "deb [signed-by=/usr/share/keyrings/opensearch.key] https://artifacts.opensearch.org/releases/bundle/opensearch/2.x/ubuntu noble main" | sudo tee /etc/apt/sources.list.d/opensearch.list
+```
+
+For Debian:
+
+```
+wget -qO - https://artifacts.opensearch.org/publickey | sudo gpg --dearmor -o /usr/share/keyrings/opensearch.key
+echo "deb [signed-by=/usr/share/keyrings/opensearch.key] https://artifacts.opensearch.org/releases/bundle/opensearch/2.x/debian stable main" | sudo tee /etc/apt/sources.list.d/opensearch.list
+```
+
+Then install OpenSearch:
+
+```
 sudo apt update
 sudo apt install -y opensearch
 ```
@@ -109,9 +132,9 @@ Adjust the heap size (edit `/etc/default/tomcat10`):
 sudo sed -i 's/JAVA_OPTS="-Djava.awt.headless=true/JAVA_OPTS="-Djava.awt.headless=true -Xmx1920m/' /etc/default/tomcat10
 ```
 
-### Configure MySQL
+### Configure the database server (MySQL only)
 
-Use one file per table (required for `FLUSH TABLES` based operations):
+MariaDB uses one file per table by default, so no configuration is required. MySQL must be told to do so (required for `FLUSH TABLES` based operations):
 
 ```
 sudo sh -c "echo '[mysqld] innodb_file_per_table' >> /etc/mysql/mysql.conf.d/mysqld.cnf"
@@ -153,7 +176,7 @@ sudo chown -R tomcat10:tomcat10 /usr/local/kitodo
 Adjust the following configuration files in `/usr/local/kitodo/config/`:
 
 * `kitodo_config.properties` - the `directory.*` entries must point to the directories created above; set the script parameters (`script_createDirUserHome`, `script_createDirMeta`, `script_createSymLink`, `script_deleteSymLink`) to `/usr/local/kitodo/scripts/...`
-* `hibernate.cfg.xml` - database URL, user and password and the search index host (defaults work for a local MySQL/OpenSearch)
+* `hibernate.cfg.xml` - database URL, user and password and the search index host. The shipped defaults point at a local MySQL/OpenSearch; for MariaDB set `hibernate.connection.url` to `jdbc:mariadb://localhost/kitodo` (see [Use MariaDB](use-mariadb.md))
 
 ### Install modules
 
@@ -165,12 +188,14 @@ sudo chown -R tomcat10:tomcat10 /usr/local/kitodo
 ### Import the SQL dump and deploy the WAR file into Tomcat
 
 ```
-mysql -u kitodo -D kitodo --password=kitodo < kitodo-4.sql
+mariadb -u kitodo -D kitodo --password=kitodo < kitodo-4.sql
 sudo chown tomcat10:tomcat10 kitodo-<version>.war
 sudo mv kitodo-<version>.war /var/lib/tomcat10/webapps/kitodo.war
 sudo service tomcat10 restart
 until curl -s "localhost:8080/kitodo/pages/login.jsf" | grep -q -o "KITODO.PRODUCTION" ; do sleep 1; done
 ```
+
+(When using MySQL, import the dump with the `mysql` client instead of `mariadb`.)
 
 ### Login
 
