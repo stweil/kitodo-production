@@ -21,6 +21,7 @@ nav:
     - API documentation:
         - 'Application Programming Interface (API)': 'developer/api/README.md'
         - 'ActiveMQ web services': 'developer/api/activemq_jms_api.md'
+        - 'KitodoScript': 'developer/api/kitodoscript.md'
         - 'Jersey WebAPI (removed)': 'developer/api/jersey_jaxrs_api.md'
     - Tests: 'developer/tests/README.md'
     - Javadoc: 'developer/javadoc/README.md'
@@ -40,6 +41,11 @@ nav:
         - 'Aufgaben': 'user/introduction/tasks.md'
         - 'Laufzettel': 'user/introduction/processslip.md'
         - 'Homeverzeichnis': 'user/introduction/homedirectory.md'
+        - 'Paginierung': 'user/introduction/pagination.md'
+        - 'Korrekturmeldungen': 'user/introduction/corrections.md'
+        - 'Massenimport': 'user/introduction/massimport.md'
+        - 'Importkonfigurationen und Katalogsuche': 'user/introduction/catalogimport.md'
+        - 'Export': 'user/introduction/export.md'
 theme:
   name: material
   features:
