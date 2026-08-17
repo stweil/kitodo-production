@@ -61,7 +61,7 @@
         <jaxb.glassfish-runtime.version>4.0.6</jaxb.glassfish-runtime.version>
         <jaxb2-basics-runtime.version>1.11.1</jaxb2-basics-runtime.version>
         <jaxen.version>1.2.0</jaxen.version>
-        <jhove.version>1.32.1</jhove.version>
+        <jhove.version>1.34.0</jhove.version>
         <jhove.modules.gif.hul.version>1.4.3</jhove.modules.gif.hul.version>
         <jhove.modules.jpeg2000.hul.version>1.4.4</jhove.modules.jpeg2000.hul.version>
         <jhove.modules.jpeg.hul.version>1.5.4</jhove.modules.jpeg.hul.version>
