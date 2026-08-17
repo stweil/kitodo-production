@@ -1,0 +1,9 @@
+This file is obsolete.
+
+Earlier versions of Kitodo.Production generated the documents for the search
+index in separate *type* classes (BaseType, *Type) which built JSON objects
+by hand. Since the switch to Hibernate Search, the index documents are
+derived from the JPA entity annotations themselves, and there is no
+separate document type layer anymore.
+
+See the section "Search index" in ../README.md.
