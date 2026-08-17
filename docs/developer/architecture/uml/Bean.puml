@@ -1,0 +1,35 @@
+@startuml
+
+abstract class BaseBean {
++Integer id
++getId():Integer
++setId(Integer id):void
+}
+
+abstract class BaseTemplateBean {
+}
+
+class LdapGroup {
++String title
++getTitle():String
++setTitle(String title):void
+}
+
+class Template {
++String title
++getTitle():String
++setTitle(String title):void
+}
+
+class Process {
++String title
++getTitle():String
++setTitle(String title):void
+}
+
+BaseBean <|-- BaseTemplateBean : extends
+BaseBean <|-- LdapGroup : extends
+BaseTemplateBean <|-- Template : extends
+BaseTemplateBean <|-- Process : extends
+
+@enduml
