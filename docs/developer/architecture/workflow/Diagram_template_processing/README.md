@@ -1,25 +1,30 @@
 # Diagram - template processing
 
-## Camunda BPMN Model library
+## Camunda BPMN model library
 
-Kitodo uses for reading BPMN diagrams as processes Camunda BPMN library.
+Kitodo uses the [Camunda BPMN model API](https://docs.camunda.org/manual/latest/model-apis/bpmn-model-api/) for reading BPMN diagrams as processes:
 
 ```java
-public void loadProcess() throws IOException {
-    String diagramPath = ConfigCore.getKitodoDiagramDirectory() + this.diagramName + ".bpmn20.xml";
-    modelInstance = Bpmn.readModelFromStream(fileService.read(new File(diagramPath).toURI()));
+public Reader(String diagramName) throws IOException {
+    String diagramPath = ConfigCore.getKitodoDiagramDirectory() + diagramName + ".bpmn20.xml";
+    loadProcess(ServiceManager.getFileService().read(Paths.get(diagramPath).toUri()));
+}
+
+private void loadProcess(InputStream diagramXmlContent) throws IOException {
+    modelInstance = Bpmn.readModelFromStream(diagramXmlContent);
 }
 ```
-It has bean classes which reads custom XML attributes.
-They take as attribute BPMN classes (Process, Task, ScriptTask) and read those attributes:
+
+The diagram is iterated element by element (`Reader.readWorkflowTasks()`); for every task element the custom XML attributes in the namespace `http://www.kitodo.org/template` are read into the model beans `KitodoTask` and `KitodoScriptTask`:
 
 ```java
-static final String NAMESPACE = "http://www.kitodo.com/template";
-....
-task.getAttributeValueNs(NAMESPACE, "priority")
+static final String NAMESPACE = "http://www.kitodo.org/template";
+...
+task.getAttributeValueNs(NAMESPACE, "typeMetadata");
 ```
+
+The `Converter` class turns the model into database beans: `convertWorkflowToTemplate(template)` fills a `Template` with its `Task` objects (title, ordering, edit type, types, permissions, ...). Tasks behind a gateway carry a `WorkflowCondition` which is persisted to the `workflowcondition` table. The ordering of the tasks is derived from the sequence of the diagram: tasks on different branches after a gateway get the same ordering number.
 
 ## Database
 
-Template table was modified to store reference to Workflow table.
-Additionally Task table has a column workflowCondition, which stores information about possible conditions defined in gateways.
+The `template` table references the `workflow` table (a template can be created out of a workflow diagram), and the `task` table has a foreign key `workflowCondition_id` to the `workflowcondition` table, which stores the conditions defined in the diagram gateways.

@@ -1,23 +1,9 @@
-@startuml
+This file is obsolete.
 
-interface TypeInterface<T> {
-+HttpEntity createDocument(T baseIndexedBean)
-+HashMap<Integer, HttpEntity> createDocuments(List<T> baseIndexedBeans)
-}
+Earlier versions of Kitodo.Production generated the documents for the search
+index in separate *type* classes (BaseType, *Type) which built JSON objects
+by hand. Since the switch to Hibernate Search, the index documents are
+derived from the JPA entity annotations themselves, and there is no
+separate document type layer anymore.
 
-abstract class BaseType<T extends BaseIndexedBean> {
-+ {abstract} HttpEntity createDocument(T baseIndexedBean)
-+HashMap<Integer, HttpEntity> createDocuments(List<T> baseIndexedBeans)
-~<F extends BaseIndexedBean> JSONArray addObjectRelation(List<F> objects, boolean title)
-~<F extends BaseIndexedBean> JSONArray addObjectRelation(List<F> objects)
-~String formatDate(Date date)
-}
-
-class ProcessType {
-+ HttpEntity createDocument(Process baseIndexedBean)
-}
-
-BaseType <-- ProcessType : extends
-TypeInterface <-- BaseType : implements
-
-@enduml
+See the section "Search index" in ../README.md.

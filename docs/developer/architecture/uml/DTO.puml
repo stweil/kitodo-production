@@ -1,18 +1,7 @@
-@startuml
-abstract class BaseDTO {
-+Integer id
-+getId():Integer
-+setId(Integer id):void
-}
+This file is obsolete.
 
-class ProcessDTO {
-+String title
-...
-+getTitle():String
-+setTitle(String title):void
-+get...()
-+set...()
-}
+Earlier versions of Kitodo.Production used a layer of data transfer objects
+(DTOs, BaseDTO, *DTO) between the search index and the frontend. This layer
+was removed; the forms and services work with the entity classes directly.
 
-BaseDTO <-- ProcessDTO : extends
-@enduml
+See the section "Transfer objects" in ../README.md.

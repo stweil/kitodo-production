@@ -1,14 +1,18 @@
-# Create VirtualBox appliance for Kitodo 3.x
+# Create VirtualBox appliance for Kitodo 4.x
 
-## Download Debian 9.5 ISO file
+This guide creates a [VirtualBox](https://www.virtualbox.org/) appliance with a development and test instance of Kitodo 4.x.
 
-Download `debian-9.5.0-amd64-netinst.iso` from <https://cdimage.debian.org/debian-cd/9.5.0/amd64/iso-cd/>
+*Warning: This appliance is intended for development and tests in local networks only. Do not use it in production mode!*
+
+## Download Ubuntu 24.04 LTS ISO file
+
+Download `ubuntu-24.04.x-live-server-amd64.iso` from <https://ubuntu.com/download/server>.
 
 ## Create Virtual Machine
 
-* Name: `kitodo 3.0.0-beta.1`
+* Name: `kitodo 4.1.0`
 * Type: `Linux`
-* Version: `Debian (64-bit)`
+* Version: `Ubuntu (64-bit)`
 * Memory size: `4096 MB`
 * Hard disk: `VDI` / `dynamically allocated` / `20 GB`
 
@@ -16,7 +20,6 @@ Download `debian-9.5.0-amd64-netinst.iso` from <https://cdimage.debian.org/debia
 
 * General/Advanced/Shared clipboard: `Bidirectional`
 * System/Processor/Processor(s): `2`
-* System/Processor/Extended Features: `Enable PAE/NX`
 * Display/Screen/Video Memory: `128 MB`
 * Network/Adapter 1/Advanced/Port Forwarding/+
   * Host Port: `8080`
@@ -24,38 +27,25 @@ Download `debian-9.5.0-amd64-netinst.iso` from <https://cdimage.debian.org/debia
 
 ## Start Virtual Machine
 
-Select downloaded file `debian-9.5.0-amd64-netinst.iso`
+Select the downloaded ISO file and install Ubuntu 24.04:
 
-## Debian install screen
-
-* Select `Graphical install`
 * Language: `English`
-* Location: `United States`
-* Keyboard: `German`
 * Hostname: `kitodo`
-* Domain: ` ` (blank)
-* Root password: `kitodo`
-* Full name: `kitodo`
-* User name: `kitodo`
-* User password: `kitodo`
-* Time zone: `Eastern`
-* Partitioning method: `Guided - use entire disk`
-* Partitioning scheme: `All files in one partition`
-* Mirror: `Germany/ftp.de.debian.org`
-* Proxy: ` ` (blank)
-* Software: deselect `print server`
+* Root/regular user and password: create user `kitodo` (password `kitodo`), enable `Log in automatically`
+* Server software: `OpenSSH server`
 
 ## Install VirtualBox guest additions (shared clipboard) and reboot
 
 ```
-su -c 'echo "deb http://ftp.debian.org/debian stretch-backports main contrib" > /etc/apt/sources.list.d/stretch-backports.list && apt update && apt install -y virtualbox-guest-dkms virtualbox-guest-x11 linux-headers-$(uname -r) && reboot'
+sudo apt update && sudo apt install -y virtualbox-guest-utils
+sudo reboot
 ```
 
 ## Install Kitodo
 
-Follow the installation instructions in <https://github.com/kitodo/kitodo-production/wiki/Installationsanleitung-f%C3%BCr-Kitodo.Production-3.x>
+Follow the installation instructions in [Build development version](development-version.md).
 
-Make sure to install Java 11 when using Kitodo.Production v3.4 and above, see [instructions](./development-version.md#install-openjdk-11).
+Make sure to install Java 21 (`openjdk-21-jdk`), Tomcat 10, MySQL 8 and OpenSearch 2.x.
 
 ## Create shortcuts
 
@@ -68,40 +58,39 @@ Type=Link
 URL=http://localhost:8080/kitodo/
 Icon=text-html' >> ~/Desktop/Kitodo.Production.desktop
 ```
-* Symlink to folders
+* Symlinks to folders
 ```
 ln -s /usr/local/kitodo ~/Desktop/kitodo-config
-ln -s /var/lib/tomcat8/webapps/ ~/Desktop/kitodo-app
+ln -s /var/lib/tomcat10/webapps/ ~/Desktop/kitodo-app
 ```
 
 ## Save password in Firefox
 
-* Login at <http://localhost:8080/kitodo/> with user `testAdmin` and password `test
-* Click `save` in popup dialog to let Firefox save this login
+* Log in at <http://localhost:8080/kitodo/pages/login> with user `testAdmin` and password `test`
+* Click `save` in the popup dialog to let Firefox save this login
 
 ## Export Appliance
 
 VirtualBox Manager / File / Export Appliance
 
-* File: `kitodo-production-3.0.0-beta.1.ova`
+* File: `kitodo-production-4.1.0.ova`
 * Product: `Kitodo Production`
 * Product-URL: `http://www.kitodo.org`
-* Version: `3.0.0-beta.1`
+* Version: `4.1.0`
 * Description:
 ```
 This VirtualBox appliance is intended for development and tests in local networks. Do not use it in production mode!
 
-The Kitodo.production webapp should be available from guest and host system (via NAT Port Forwarding) at:
+The Kitodo.Production webapp should be available from guest and host system (via NAT Port Forwarding) at:
 * http://localhost:8080/kitodo/
 * user: testAdmin
 * pass: test
 
-The appliance is based on debian 9.4, openjdk-8, tomcat8, mysql 5.7 and elasticsearch 5.x
-* system user: kitodo, root
+The appliance is based on Ubuntu 24.04 LTS, openjdk-21, tomcat10, mysql 8 and OpenSearch 2.x
+* system user: kitodo
 * system user password: kitodo
-* system root password: kitodo
 * mysql user: kitodo
 * mysql user password: kitodo
-* mysql root password: (blank)
+* mysql root password: kitodo
 ```
 * License: `GPLv3 https://www.gnu.org/licenses/gpl-3.0.en.html`

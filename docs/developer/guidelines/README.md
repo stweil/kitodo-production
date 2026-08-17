@@ -1,25 +1,30 @@
-# Allgemein
+# Guidelines
 
-* Arbeit in GIT nach dem [Forking Workflow](https://www.atlassian.com/git/tutorials/comparing-workflows/forking-workflow)
-* Einhaltung der [Coding Guidelines](https://www.kitodo.org/fileadmin/groups/kitodo/Dokumente/Kitodo-EntwicklerLeitfaden_2017-06.pdf)
-* zu entwickelnde Features sollten als Issue vor dem Pull-Request bekannt gemacht werden
-* Fork Branch Hinweise:
- * Jeder Branch sollte in sich geschlossen sein und nur genau die Änderungen beinhalten, die nötig sind
- * können zum Bearbeiten eines Features entweder in privaten, persönlichen Forks oder in einem Fork einer GitHub-Organisation  durch mehrere Personen durchgeführt werden
+## General
 
-# Commits
+* Work on the project repositories following the [forking workflow](https://www.atlassian.com/git/tutorials/comparing-workflows/forking-workflow)
+* Follow the [Kitodo coding guidelines](https://www.kitodo.org/fileadmin/groups/kitodo/Dokumente/Kitodo-EntwicklerLeitfaden_2017-06.pdf)
+* Features to be developed should be announced as an issue before the corresponding pull request is opened
+* Notes on fork branches:
+  * each branch should be self-contained and include only the changes that are necessary
+  * working on a feature can be done privately in personal forks or, by several people, in a fork of a GitHub organization
 
-* in englischer Sprache, Orientierung an bspw. <http://chris.beams.io/posts/git-commit/>
-* Commits sollten nur die Änderungen enthalten, die auch in der Commit Nachricht beschrieben sind
-* eher viele kleine Commits mit jeweils wenigen Änderungen als wenige, große / umfangreiche Commits
+## Commits
 
-# Pull-Requests
+* in English, following e.g. the recommendations in [How to Write a Git Commit Message](http://chris.beams.io/posts/git-commit/)
+* a commit should only contain the changes that are described in the commit message
+* prefer many small commits with few changes each over few large, extensive commits
 
-* sollten idealerweise von einer anderen Person als dem Ersteller auf GitHub begutachtet (review changes) werden.
-* müssen zum Zeitpunkt des Merges fehlerfrei integrierbar sein. Konflikte müssen vom Ersteller gelöst werden.
+## Pull requests
 
-# Branch Unterscheidung
+* ideally, the changes should be reviewed by another person than the author on GitHub
+* at the time of merging, the pull request must integrate cleanly; conflicts have to be resolved by the author
 
-* Unterscheidung bezieht sich auf die GitHub Projekte [Kitodo.ContentServer](https://github.com/kitodo/kitodo-contentserver), [Kitodo.Production](https://github.com/kitodo/kitodo-production) und [Kitodo.UGH](https://github.com/kitodo/kitodo-ugh)
-* **Branch 2.x**: ist die Weiterentwicklung der alten Goobi.Production Community Edition (Version 1.11.x) unter dem neuen Namen Kitodo.Production und wird als Version 2.x weiter geführt
-* **Branch main (ehemals master)**: die unter dem DFG Projekt geförderten Weiterentwicklung von Kitodo.Production findet hier statt und enthält auch die darauf basierenden betriebenen Entwicklungen
+## Branches
+
+The description below refers to the [Kitodo.Production](https://github.com/kitodo/kitodo-production) project (see [supported versions](https://github.com/kitodo/kitodo-production/blob/main/SUPPORTED_VERSIONS.md) for which releases are maintained).
+
+* **branch `main`**: the active development branch. All new features and changes for the current version (4.x) are developed here
+* **maintenance branches** (for example `3.9.x`): older releases that are still being maintained with security fixes only. Changes for these releases are backported from `main` or developed directly in the maintenance branch
+
+All other historical branches (for example `2.x`) are no longer maintained and are kept for reference only.

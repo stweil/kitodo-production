@@ -2,43 +2,32 @@
 
 ## Copy process attributes
 
-It works exactly like in previous version.
+The attributes of the template (title, ruleset, project, ... and workpieces with their metadata and structure) are copied to the new process by `ProcessGenerator` (`org.kitodo.production.process.ProcessGenerator`).
 
 ## Copy tasks
 
-Here logic has changed. New templates allow to create processes with conditional task execution.
-That means that during process creation user can give conditions (they are defined in diagram gateways and stored in workflowCondition column of Task table).
-According to those conditions certain tasks are copied to newly created process.
+All tasks of the template are copied to the new process (see `ProcessGenerator.copyTasks`). After the copy the tasks are ordered by their ordering number and title:
 
 ```java
-public static void copyTasks(Template processTemplate, Process processCopy, List<String> workflowConditions) {
-        List<Task> tasks = new ArrayList<>();
-        for (Task templateTask : processTemplate.getTasks()) {
-            String taskWorkflowCondition = templateTask.getWorkflowCondition();
-            if (Objects.isNull(workflowConditions) || workflowConditions.isEmpty()) {
-                // tasks created before workflow functionality was introduced has null value
-                if (Objects.isNull(taskWorkflowCondition) || taskWorkflowCondition.contains("default")) {
-                    Task task = getCopiedTask(templateTask);
-                    task.setProcess(processCopy);
-                    tasks.add(task);
-                }
-            } else {
-                for (String workflowCondition : workflowConditions) {
-                    if (taskWorkflowCondition.contains("default")) {
-                        Task task = getCopiedTask(templateTask);
-                        task.setProcess(processCopy);
-                        tasks.add(task);
-                    } else if (taskWorkflowCondition.contains(workflowCondition)) {
-                        Task task = getCopiedTask(templateTask);
-                        task.setProcess(processCopy);
-                        tasks.add(task);
-                    }
-                }
-            }
-        }
-        adjustTaskOrdering(tasks);
-        processCopy.setTasks(tasks);
+public static void copyTasks(Template processTemplate, Process processCopy) {
+    List<Task> tasks = new ArrayList<>();
+
+    for (Task templateTask : processTemplate.getTasks()) {
+        Task task = new Task(templateTask);
+        task.setProcess(processCopy);
+        tasks.add(task);
     }
+
+    tasks.sort(Comparator.comparing(Task::getOrdering).thenComparing(Task::getTitle));
+    processCopy.setTasks(tasks);
+}
 ```
 
-At the end right task ordering is determined.
+## Conditional task execution
+
+Tasks which are behind a gateway in the workflow diagram carry a `WorkflowCondition` (see [Diagram template processing](../Diagram_template_processing/README.md)). Since all tasks are copied to the process, the condition is not used to select tasks but is evaluated at runtime, when the task is activated: `WorkflowControllerService.activateTask` checks `isWorkflowConditionFulfilled(process, condition)`.
+
+* If the condition type is `NONE` or the condition evaluates to true, the task is opened and executed.
+* If the condition evaluates to false, the task is closed immediately with the status *done* (it is skipped for this process) and the following tasks are activated.
+
+The condition value can either be an XPath expression against the process' metadata file (`XPath`) or a script (`Script`); see `WorkflowConditionService` and `WorkflowControllerService`.
