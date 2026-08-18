@@ -71,7 +71,12 @@ public class LoginPage extends Page<LoginPage> {
         passwordInput.sendKeys(password);
 
         loginButton.click();
-        Thread.sleep(Browser.getDelayAfterLogin());
+        await("Wait for redirect after login to complete")
+                .pollDelay(Browser.getDelayAfterLogin(), TimeUnit.MILLISECONDS)
+                .pollInterval(500, TimeUnit.MILLISECONDS)
+                .atMost(30, TimeUnit.SECONDS)
+                .ignoreExceptions()
+                .until(() -> !Browser.getCurrentUrl().contains("login"));
     }
 
     /**
