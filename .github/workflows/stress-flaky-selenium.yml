@@ -7,8 +7,9 @@
 #   - CATALINA_OPTS enables debug loggers in the Tomcat application (HTTP
 #     client wire/connection logs, Elasticsearch client, Hibernate Search,
 #     c3p0, H2).
-#   - A background loop captures jstack thread dumps of the Tomcat JVM and
-#     of the failsafe test JVM every 5 seconds.
+#   - A background loop captures jstack thread dumps of every Java process
+#     (Tomcat, failsafe test JVM, H2 server, Maven) every 5 seconds, samples
+#     CPU usage and load, and all JVMs write GC logs (via _JAVA_OPTIONS).
 #   - LoginStress repeats the login/logout cycle (not part of the regular CI
 #     run, because its name does not match the **/*ST.java failsafe include).
 
@@ -93,16 +94,25 @@ jobs:
 
       - name: start thread dump collector
         run: |
-          mkdir -p "$GITHUB_WORKSPACE/thread-dumps" "$GITHUB_WORKSPACE/stress-logs"
+          mkdir -p "$GITHUB_WORKSPACE/thread-dumps" "$GITHUB_WORKSPACE/stress-logs" "$GITHUB_WORKSPACE/gc-logs"
+          echo "_JAVA_OPTIONS=-Xlog:gc,pid:file=$GITHUB_WORKSPACE/gc-logs/gc-all.log:append,uptime" >> "$GITHUB_ENV"
           (
             while true; do
               ts=$(date +%s)
-              for pid in $(pgrep -f 'org.apache.catalina.startup.Bootstra[p]' || true); do
-                jstack "$pid" > "$GITHUB_WORKSPACE/thread-dumps/tomcat-$ts.txt" 2>&1 || true
+              for pid in $(pgrep -x java || true); do
+                cmd=$(tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null)
+                case "$cmd" in
+                  *catalina*) name=tomcat ;;
+                  *ForkedBooter*|*surefire*) name=testjvm ;;
+                  *org.h2.tools.Server*) name=h2server ;;
+                  *) name=java ;;
+                esac
+                { echo "# pid=$pid cmd=${cmd:0:300}"; jstack "$pid"; } \
+                  > "$GITHUB_WORKSPACE/thread-dumps/$name-$ts.txt" 2>&1 || true
               done
-              for pid in $(pgrep -f 'org.apache.maven.surefire.booter.ForkedBoote[r]' || true); do
-                jstack "$pid" > "$GITHUB_WORKSPACE/thread-dumps/testjvm-$ts.txt" 2>&1 || true
-              done
+              { echo "=== $ts load=$(cut -d' ' -f1-3 /proc/loadavg)"
+                ps -eo pid,pcpu,pmem,args --sort=-pcpu | head -8
+              } >> "$GITHUB_WORKSPACE/stress-logs/cpu-samples.txt" 2>/dev/null || true
               sleep 5
             done
           ) &
@@ -156,6 +166,7 @@ jobs:
           path: |
             thread-dumps/
             stress-logs/
+            gc-logs/
             Kitodo/target/failsafe-reports/
           include-hidden-files: true
 
@@ -169,7 +180,10 @@ jobs:
           cat results.env 2>/dev/null || true
           echo "=== debug logger evidence in app log (expect matches if CATALINA_OPTS was picked up) ==="
           grep -hm5 -E "Connecting to|Reusing|http-outgoing|Session .*closed|Adding a new [0-9]+ connection|HikariPool|c3p0" boundary-run-1.log 2>/dev/null || echo "(no debug logger output found - check CATALINA_OPTS)"
-          echo "=== thread dumps collected: $(ls "$GITHUB_WORKSPACE/thread-dumps" 2>/dev/null | wc -l) files ==="
+          echo "=== thread dumps collected by type ==="
+          for p in tomcat testjvm h2server java; do echo "$p: $(ls "$GITHUB_WORKSPACE/thread-dumps" 2>/dev/null | grep -c "^$p-")"; done
+          echo "=== GC log size: $(wc -c < "$GITHUB_WORKSPACE/gc-logs/gc-all.log" 2>/dev/null || echo 0) bytes ==="
+          echo "=== CPU sample count: $(grep -c '^=== ' "$GITHUB_WORKSPACE/stress-logs/cpu-samples.txt" 2>/dev/null || echo 0) ==="
           source results.env 2>/dev/null || true
           if [ "${boundary-failed:-0}" = "1" ]; then
             echo "One or more stress runs failed - see artifacts for the details."
