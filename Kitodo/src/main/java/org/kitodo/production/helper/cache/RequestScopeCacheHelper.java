@@ -76,13 +76,13 @@ public class RequestScopeCacheHelper {
     public static <T> T getFromCache(String key, Supplier<T> supplier, Class<T> clazz) {
         Map<String, Object> cache = getCache();
         if (Objects.nonNull(cache)) {
-            // save value if it does not yet exist
-            if (!cache.containsKey(key)) {
+            // atomically save the value if it does not yet exist, so the supplier is only evaluated once
+            // per key even under concurrent access; ConcurrentHashMap does not allow null values, so a
+            // sentinel is stored instead
+            Object cachedValue = cache.computeIfAbsent(key, k -> {
                 T value = supplier.get();
-                // ConcurrentHashMap does not allow null values, so a sentinel is stored instead
-                cache.put(key, Objects.isNull(value) ? NULL_VALUE : value);
-            };
-            Object cachedValue = cache.get(key);
+                return Objects.isNull(value) ? NULL_VALUE : value;
+            });
             return cachedValue == NULL_VALUE ? null : clazz.cast(cachedValue);
         }
         // cache not available, e.g., when called outside of request scope (in a background process)
