@@ -11,13 +11,18 @@
 
 package org.kitodo.selenium.testframework.pages;
 
+import java.time.Duration;
+
 import org.kitodo.data.database.beans.User;
 import org.kitodo.data.database.exceptions.DAOException;
 import org.kitodo.production.security.password.SecurityPasswordEncoder;
 import org.kitodo.production.services.ServiceManager;
 import org.kitodo.selenium.testframework.Browser;
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class LoginPage extends Page<LoginPage> {
 
@@ -59,7 +64,18 @@ public class LoginPage extends Page<LoginPage> {
         passwordInput.sendKeys(password);
 
         loginButton.click();
-        Thread.sleep(Browser.getDelayAfterLogin());
+        awaitAuthenticatedDashboard();
+    }
+
+    /**
+     * Waits until the browser has reached the authenticated dashboard, indicated by the top
+     * navigation being present in the DOM. This makes the login deterministic instead of
+     * relying on a fixed delay: the top navigation links can only be used once they have been
+     * rendered.
+     */
+    private void awaitAuthenticatedDashboard() {
+        WebDriverWait webDriverWait = new WebDriverWait(Browser.getDriver(), Duration.ofSeconds(30));
+        webDriverWait.until(ExpectedConditions.presenceOfElementLocated(By.id("dashboard-menu")));
     }
 
     public void performLoginAsAdmin() throws InterruptedException, DAOException {
