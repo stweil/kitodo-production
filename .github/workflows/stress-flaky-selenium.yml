@@ -4,14 +4,18 @@
 # class) with diagnostic logging and periodic thread dumps, so the cause of
 # the intermittent login stalls can be verified from the collected artifacts:
 #
-#   - CATALINA_OPTS enables debug loggers in the Tomcat application (HTTP
-#     client wire/connection logs, Elasticsearch client, Hibernate Search,
-#     c3p0, H2).
+#   - _JAVA_OPTIONS enables debug loggers in every JVM, including the Tomcat
+#     application (HTTP client wire/connection logs, Elasticsearch client,
+#     Hibernate Search, c3p0, H2).
 #   - A background loop captures jstack thread dumps of every Java process
-#     (Tomcat, failsafe test JVM, H2 server, Maven) every 5 seconds and
-#     samples CPU usage and load.
-#   - The Tomcat JVM (via CATALINA_OPTS) and the failsafe test JVM (via the
-#     argLine property) write GC logs to separate files.
+#     (Tomcat, failsafe test JVM, H2 server, Maven) every 5 seconds, samples
+#     CPU usage and load, straces chromedriver (-f -y) and lsof's the open
+#     sockets of chromedriver and Chrome to see what they are blocked on.
+#   - Every JVM writes a GC log via _JAVA_OPTIONS (a native JVM env var that
+#     each java process reads itself, so it works for the cargo Tomcat JVM and
+#     the failsafe test JVM alike, unlike CATALINA_OPTS or -DargLine).
+#   - When KITODO_STRESS_DIAGNOSTICS is set (see Browser.java), Chrome and
+#     chromedriver write their own verbose logs, which are preserved per run.
 #   - LoginStress repeats the login/logout cycle (not part of the regular CI
 #     run, because its name does not match the **/*ST.java failsafe include).
 
@@ -49,20 +53,11 @@ concurrency:
 jobs:
   stress:
     runs-on: ubuntu-24.04
-    env:
-      CATALINA_OPTS: >-
-        -Dlog4j2.logger.org.apache.http=DEBUG
-        -Dlog4j2.logger.org.apache.hc=DEBUG
-        -Dlog4j2.logger.org.elasticsearch.client=DEBUG
-        -Dlog4j2.logger.org.hibernate.search.backend.elasticsearch=DEBUG
-         -Dlog4j2.logger.com.mchange.v2.c3p0=DEBUG
-         -Dlog4j2.logger.org.h2=DEBUG
-         -Xlog:gc:file=${{ github.workspace }}/gc-logs/gc-tomcat.log:uptime,pid
     steps:
-      - name: install imagemagick (convert command required by kitodo-image-management)
+      - name: install imagemagick, strace and lsof
         run: |
           sudo apt-get update
-          sudo apt-get install -y imagemagick
+          sudo apt-get install -y imagemagick strace lsof
 
       - uses: actions/checkout@v7
 
@@ -98,6 +93,13 @@ jobs:
       - name: start thread dump collector
         run: |
           mkdir -p "$GITHUB_WORKSPACE/thread-dumps" "$GITHUB_WORKSPACE/stress-logs" "$GITHUB_WORKSPACE/gc-logs"
+          # _JAVA_OPTIONS is read by every JVM started in later steps (Maven, the cargo
+          # Tomcat JVM and the failsafe test JVM), enabling the app debug loggers and GC
+          # logging. CATALINA_OPTS does not work here because cargo's internal Tomcat
+          # launcher never reads it. Every JVM truncates the shared GC file at startup,
+          # so it finally contains the GC events of the last JVM of each maven run
+          # (the failsafe test JVM - the one that also hosts the OpenSearch test node).
+          echo "_JAVA_OPTIONS=-Xlog:gc:file=$GITHUB_WORKSPACE/gc-logs/gc-boundary.log:uptime,pid -Dlog4j2.logger.org.apache.http=DEBUG -Dlog4j2.logger.org.apache.hc=DEBUG -Dlog4j2.logger.org.elasticsearch.client=DEBUG -Dlog4j2.logger.org.hibernate.search.backend.elasticsearch=DEBUG -Dlog4j2.logger.com.mchange.v2.c3p0=DEBUG -Dlog4j2.logger.org.h2=DEBUG" >> "$GITHUB_ENV"
           (
             while true; do
               ts=$(date +%s)
@@ -111,6 +113,22 @@ jobs:
                 esac
                 { echo "# pid=$pid cmd=${cmd:0:300}"; jstack "$pid"; } \
                   > "$GITHUB_WORKSPACE/thread-dumps/$name-$ts.txt" 2>&1 || true
+              done
+              # chromedriver is a native binary (no jstack): strace it (-f follows forks,
+              # -y resolves file descriptors to their sockets) to see which syscall/socket it
+              # is blocked on while a WebDriver command hangs, and dump its open sockets
+              for pid in $(pgrep -x chromedriver || true); do
+                timeout 1 strace -tt -f -y -p "$pid" \
+                  -o "$GITHUB_WORKSPACE/thread-dumps/strace-chromedriver-$ts.txt" 2>/dev/null || true
+                { echo "=== $ts chromedriver pid=$pid"
+                  lsof -nP -p "$pid" 2>/dev/null | grep -E 'TCP|UDP'
+                } >> "$GITHUB_WORKSPACE/stress-logs/chromedriver-sockets.txt" 2>/dev/null || true
+              done
+              # same for the Chrome process itself (headless=new runs as 'chrome' or headless_shell)
+              for pid in $(pgrep -x chrome || pgrep -x headless_shell || true); do
+                { echo "=== $ts chrome pid=$pid"
+                  lsof -nP -p "$pid" 2>/dev/null | grep -E 'TCP'
+                } >> "$GITHUB_WORKSPACE/stress-logs/chrome-sockets.txt" 2>/dev/null || true
               done
               { echo "=== $ts load=$(cut -d' ' -f1-3 /proc/loadavg)"
                 ps -eo pid,pcpu,pmem,args --sort=-pcpu | head -8
@@ -126,16 +144,21 @@ jobs:
           runs="${runs:-3}"
           classes="${{ inputs.boundary-classes }}"
           classes="${classes:-MetadataST,UIInteractionsST,ImportingST,SearchingST}"
+          export KITODO_STRESS_DIAGNOSTICS=1
           failed=0
           for i in $(seq 1 "$runs"); do
             echo "=== boundary run $i of $runs (classes: $classes) ==="
             xvfb-run --server-args="-screen 0 1600x1280x24" \
                mvn clean install -B '-Pselenium,!development' \
                -Dit.test="$classes" -DfailIfNoSpecifiedTests=false \
-               -DargLine="-Xlog:gc:file=$GITHUB_WORKSPACE/gc-logs/gc-boundary-$i.log:uptime,pid" \
                2>&1 | tee "$GITHUB_WORKSPACE/stress-logs/boundary-run-$i.log"
             rc=${PIPESTATUS[0]}
             echo "boundary run $i exit code: $rc"
+            # preserve this run's driver/browser logs (the next 'mvn clean' deletes target/)
+            cp "$GITHUB_WORKSPACE/Kitodo/target/chromedriver-diagnostic.log" \
+               "$GITHUB_WORKSPACE/stress-logs/chromedriver-diagnostic-boundary-$i.log" 2>/dev/null || true
+            cp "$GITHUB_WORKSPACE/Kitodo/target/chrome-debug.log" \
+               "$GITHUB_WORKSPACE/stress-logs/chrome-debug-boundary-$i.log" 2>/dev/null || true
             [ "$rc" -ne 0 ] && failed=1
           done
           echo "boundary-failed=$failed" > "$GITHUB_WORKSPACE/stress-logs/results.env"
@@ -145,14 +168,21 @@ jobs:
           iterations="${{ inputs.stress-iterations }}"
           iterations="${iterations:-50}"
           export KITODO_STRESS_ITERATIONS="$iterations"
+          export KITODO_STRESS_DIAGNOSTICS=1
+          # point the shared GC log at a separate file for the login stress run
+          echo "_JAVA_OPTIONS=-Xlog:gc:file=$GITHUB_WORKSPACE/gc-logs/gc-login.log:uptime,pid -Dlog4j2.logger.org.apache.http=DEBUG -Dlog4j2.logger.org.apache.hc=DEBUG -Dlog4j2.logger.org.elasticsearch.client=DEBUG -Dlog4j2.logger.org.hibernate.search.backend.elasticsearch=DEBUG -Dlog4j2.logger.com.mchange.v2.c3p0=DEBUG -Dlog4j2.logger.org.h2=DEBUG" >> "$GITHUB_ENV"
           echo "=== login stress ($iterations iterations) ==="
           xvfb-run --server-args="-screen 0 1600x1280x24" \
-             mvn clean install -B '-Pselenium,!development' \
-             -Dit.test='LoginStress' -DfailIfNoSpecifiedTests=false \
-             -DargLine="-Xlog:gc:file=$GITHUB_WORKSPACE/gc-logs/gc-login.log:uptime,pid" \
-             2>&1 | tee "$GITHUB_WORKSPACE/stress-logs/login-stress.log"
+            mvn clean install -B '-Pselenium,!development' \
+            -Dit.test='LoginStress' -DfailIfNoSpecifiedTests=false \
+            2>&1 | tee "$GITHUB_WORKSPACE/stress-logs/login-stress.log"
           rc=${PIPESTATUS[0]}
           echo "login stress exit code: $rc"
+          # preserve this run's driver/browser logs
+          cp "$GITHUB_WORKSPACE/Kitodo/target/chromedriver-diagnostic.log" \
+            "$GITHUB_WORKSPACE/stress-logs/chromedriver-diagnostic-login.log" 2>/dev/null || true
+          cp "$GITHUB_WORKSPACE/Kitodo/target/chrome-debug.log" \
+            "$GITHUB_WORKSPACE/stress-logs/chrome-debug-login.log" 2>/dev/null || true
           if [ "$rc" -ne 0 ]; then
             echo "boundary-failed=1" > "$GITHUB_WORKSPACE/stress-logs/results.env"
           fi
@@ -186,9 +216,14 @@ jobs:
           grep -hm5 -E "Connecting to|Reusing|http-outgoing|Session .*closed|Adding a new [0-9]+ connection|HikariPool|c3p0" boundary-run-1.log 2>/dev/null || echo "(no debug logger output found - check CATALINA_OPTS)"
           echo "=== thread dumps collected by type ==="
           for p in tomcat testjvm h2server java; do echo "$p: $(ls "$GITHUB_WORKSPACE/thread-dumps" 2>/dev/null | grep -c "^$p-")"; done
-          echo "=== GC logs ==="
-          ls -l "$GITHUB_WORKSPACE/gc-logs" 2>/dev/null || echo "(none)"
-          echo "=== CPU sample count: $(grep -c '^=== ' "$GITHUB_WORKSPACE/stress-logs/cpu-samples.txt" 2>/dev/null || echo 0) ==="
+           echo "=== GC logs ==="
+           ls -l "$GITHUB_WORKSPACE/gc-logs" 2>/dev/null || echo "(none)"
+           echo "=== driver/browser diagnostic logs ==="
+           ls -l "$GITHUB_WORKSPACE/stress-logs/"*diagnostic*.log "$GITHUB_WORKSPACE/stress-logs/"*chrome-debug*.log 2>/dev/null || echo "(none)"
+           echo "=== chromedriver socket samples: $(grep -c '^=== ' "$GITHUB_WORKSPACE/stress-logs/chromedriver-sockets.txt" 2>/dev/null || echo 0) ==="
+           echo "=== chrome socket samples: $(grep -c '^=== ' "$GITHUB_WORKSPACE/stress-logs/chrome-sockets.txt" 2>/dev/null || echo 0) ==="
+           echo "=== chromedriver strace samples: $(ls "$GITHUB_WORKSPACE/thread-dumps" 2>/dev/null | grep -c '^strace-chromedriver-') ==="
+           echo "=== CPU sample count: $(grep -c '^=== ' "$GITHUB_WORKSPACE/stress-logs/cpu-samples.txt" 2>/dev/null || echo 0) ==="
           source results.env 2>/dev/null || true
           if [ "${boundary-failed:-0}" = "1" ]; then
             echo "One or more stress runs failed - see artifacts for the details."
