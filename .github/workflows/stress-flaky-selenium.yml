@@ -1,0 +1,177 @@
+# Stress workflow for the flaky selenium test steps.
+#
+# Repeatedly runs only the flaky test classes (and the dedicated LoginStress
+# class) with diagnostic logging and periodic thread dumps, so the cause of
+# the intermittent login stalls can be verified from the collected artifacts:
+#
+#   - CATALINA_OPTS enables debug loggers in the Tomcat application (HTTP
+#     client wire/connection logs, Elasticsearch client, Hibernate Search,
+#     c3p0, H2).
+#   - A background loop captures jstack thread dumps of the Tomcat JVM and
+#     of the failsafe test JVM every 5 seconds.
+#   - LoginStress repeats the login/logout cycle (not part of the regular CI
+#     run, because its name does not match the **/*ST.java failsafe include).
+
+name: Stress flaky selenium tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      boundary-runs:
+        description: 'Number of runs of the flaky classes (class-boundary churn stress)'
+        required: false
+        default: '3'
+        type: string
+      boundary-classes:
+        description: 'Comma-separated ST classes for the boundary runs'
+        required: false
+        default: 'MetadataST,UIInteractionsST,ImportingST,SearchingST'
+        type: string
+      stress-iterations:
+        description: 'Number of login/logout cycles for LoginStress'
+        required: false
+        default: '50'
+        type: string
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'Kitodo/pom.xml'
+      - 'Kitodo/src/test/**'
+      - '.github/workflows/stress-flaky-selenium.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  stress:
+    runs-on: ubuntu-24.04
+    env:
+      CATALINA_OPTS: >-
+        -Dlog4j2.logger.org.apache.http=DEBUG
+        -Dlog4j2.logger.org.apache.hc=DEBUG
+        -Dlog4j2.logger.org.elasticsearch.client=DEBUG
+        -Dlog4j2.logger.org.hibernate.search.backend.elasticsearch=DEBUG
+        -Dlog4j2.logger.com.mchange.v2.c3p0=DEBUG
+        -Dlog4j2.logger.org.h2=DEBUG
+    steps:
+      - name: install imagemagick (convert command required by kitodo-image-management)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+
+      - uses: actions/checkout@v7
+
+      - name: copy files
+        run: |
+            cp $GITHUB_WORKSPACE/config/database.yml.actions $GITHUB_WORKSPACE/config/database.yml
+            cp $GITHUB_WORKSPACE/Kitodo-DataManagement/src/main/resources/db/config/flyway.properties.actions $GITHUB_WORKSPACE/Kitodo-DataManagement/src/main/resources/db/config/flyway.properties
+
+      - name: start mysql
+        run:
+            sudo service mysql start
+      - name: create database
+        run:
+            mysql -u root -proot -e 'CREATE DATABASE kitodo;'
+      - name: setup database
+        run:
+            mysql -u root -proot -e "CREATE USER 'kitodo'@'localhost' IDENTIFIED BY 'kitodo';"
+            mysql -u root -proot -e "GRANT ALL ON kitodo.* TO 'kitodo'@'localhost';"
+      - name: import schema
+        run:
+            mysql -u root -proot kitodo < $GITHUB_WORKSPACE/Kitodo/setup/schema.sql
+      - name: import default
+        run:
+            mysql -u root -proot kitodo < $GITHUB_WORKSPACE/Kitodo/setup/default.sql
+
+      - name: set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: start thread dump collector
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/thread-dumps" "$GITHUB_WORKSPACE/stress-logs"
+          (
+            while true; do
+              ts=$(date +%s)
+              for pid in $(pgrep -f 'org.apache.catalina.startup.Bootstra[p]' || true); do
+                jstack "$pid" > "$GITHUB_WORKSPACE/thread-dumps/tomcat-$ts.txt" 2>&1 || true
+              done
+              for pid in $(pgrep -f 'org.apache.maven.surefire.booter.ForkedBoote[r]' || true); do
+                jstack "$pid" > "$GITHUB_WORKSPACE/thread-dumps/testjvm-$ts.txt" 2>&1 || true
+              done
+              sleep 5
+            done
+          ) &
+          echo $! > /tmp/jstack-loop.pid
+
+      - name: run boundary churn stress (flaky classes only)
+        run: |
+          runs="${{ inputs.boundary-runs }}"
+          runs="${runs:-3}"
+          classes="${{ inputs.boundary-classes }}"
+          classes="${classes:-MetadataST,UIInteractionsST,ImportingST,SearchingST}"
+          failed=0
+          for i in $(seq 1 "$runs"); do
+            echo "=== boundary run $i of $runs (classes: $classes) ==="
+            xvfb-run --server-args="-screen 0 1600x1280x24" \
+              mvn clean install -B '-Pselenium,!development' \
+              -Dit.test="$classes" -DfailIfNoSpecifiedTests=false \
+              2>&1 | tee "$GITHUB_WORKSPACE/stress-logs/boundary-run-$i.log"
+            rc=${PIPESTATUS[0]}
+            echo "boundary run $i exit code: $rc"
+            [ "$rc" -ne 0 ] && failed=1
+          done
+          echo "boundary-failed=$failed" > "$GITHUB_WORKSPACE/stress-logs/results.env"
+
+      - name: run login stress (LoginStress)
+        run: |
+          iterations="${{ inputs.stress-iterations }}"
+          iterations="${iterations:-50}"
+          export KITODO_STRESS_ITERATIONS="$iterations"
+          echo "=== login stress ($iterations iterations) ==="
+          xvfb-run --server-args="-screen 0 1600x1280x24" \
+            mvn clean install -B '-Pselenium,!development' \
+            -Dit.test='LoginStress' -DfailIfNoSpecifiedTests=false \
+            2>&1 | tee "$GITHUB_WORKSPACE/stress-logs/login-stress.log"
+          rc=${PIPESTATUS[0]}
+          echo "login stress exit code: $rc"
+          if [ "$rc" -ne 0 ]; then
+            echo "boundary-failed=1" > "$GITHUB_WORKSPACE/stress-logs/results.env"
+          fi
+
+      - name: stop thread dump collector
+        if: always()
+        run: |
+          kill "$(cat /tmp/jstack-loop.pid)" 2>/dev/null || true
+
+      - name: upload stress diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stress-diagnostics
+          path: |
+            thread-dumps/
+            stress-logs/
+            Kitodo/target/failsafe-reports/
+          include-hidden-files: true
+
+      - name: summarize diagnostics
+        if: always()
+        run: |
+          cd "$GITHUB_WORKSPACE/stress-logs"
+          echo "=== LOGIN STALL occurrences ==="
+          grep -h "LOGIN STALL" *.log 2>/dev/null || echo "(none)"
+          echo "=== failed runs ==="
+          cat results.env 2>/dev/null || true
+          echo "=== debug logger evidence in app log (expect matches if CATALINA_OPTS was picked up) ==="
+          grep -hm5 -E "Connecting to|Reusing|http-outgoing|Session .*closed|Adding a new [0-9]+ connection|HikariPool|c3p0" boundary-run-1.log 2>/dev/null || echo "(no debug logger output found - check CATALINA_OPTS)"
+          echo "=== thread dumps collected: $(ls "$GITHUB_WORKSPACE/thread-dumps" 2>/dev/null | wc -l) files ==="
+          source results.env 2>/dev/null || true
+          if [ "${boundary-failed:-0}" = "1" ]; then
+            echo "One or more stress runs failed - see artifacts for the details."
+            exit 1
+          fi
