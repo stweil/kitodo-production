@@ -70,14 +70,10 @@ public class RequestScopeCacheHelper {
     public static <T> T getFromCache(String key, Supplier<T> supplier, Class<T> clazz) {
         Map<String, Object> cache = getCache();
         if (Objects.nonNull(cache)) {
-            // save value if it does not yet exist
-            if (!cache.containsKey(key)) {
-                T value = supplier.get();
-                if (Objects.nonNull(value)) {
-                    cache.put(key, value);
-                }
-            };
-            return clazz.cast(cache.get(key));
+            // computeIfAbsent evaluates the supplier atomically if the key is not yet cached and
+            // records nothing if the supplier returns null
+            Object value = cache.computeIfAbsent(key, k -> supplier.get());
+            return clazz.cast(value);
         }
         // cache not available, e.g., when called outside of request scope (in a background process)
         return supplier.get();
