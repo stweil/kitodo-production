@@ -8,8 +8,10 @@
 #     client wire/connection logs, Elasticsearch client, Hibernate Search,
 #     c3p0, H2).
 #   - A background loop captures jstack thread dumps of every Java process
-#     (Tomcat, failsafe test JVM, H2 server, Maven) every 5 seconds, samples
-#     CPU usage and load, and all JVMs write GC logs (via _JAVA_OPTIONS).
+#     (Tomcat, failsafe test JVM, H2 server, Maven) every 5 seconds and
+#     samples CPU usage and load.
+#   - The Tomcat JVM (via CATALINA_OPTS) and the failsafe test JVM (via the
+#     argLine property) write GC logs to separate files.
 #   - LoginStress repeats the login/logout cycle (not part of the regular CI
 #     run, because its name does not match the **/*ST.java failsafe include).
 
@@ -53,8 +55,9 @@ jobs:
         -Dlog4j2.logger.org.apache.hc=DEBUG
         -Dlog4j2.logger.org.elasticsearch.client=DEBUG
         -Dlog4j2.logger.org.hibernate.search.backend.elasticsearch=DEBUG
-        -Dlog4j2.logger.com.mchange.v2.c3p0=DEBUG
-        -Dlog4j2.logger.org.h2=DEBUG
+         -Dlog4j2.logger.com.mchange.v2.c3p0=DEBUG
+         -Dlog4j2.logger.org.h2=DEBUG
+         -Xlog:gc:file=${{ github.workspace }}/gc-logs/gc-tomcat.log:uptime,pid
     steps:
       - name: install imagemagick (convert command required by kitodo-image-management)
         run: |
@@ -95,7 +98,6 @@ jobs:
       - name: start thread dump collector
         run: |
           mkdir -p "$GITHUB_WORKSPACE/thread-dumps" "$GITHUB_WORKSPACE/stress-logs" "$GITHUB_WORKSPACE/gc-logs"
-          echo "_JAVA_OPTIONS=-Xlog:gc,pid:file=$GITHUB_WORKSPACE/gc-logs/gc-all.log:append,uptime" >> "$GITHUB_ENV"
           (
             while true; do
               ts=$(date +%s)
@@ -128,9 +130,10 @@ jobs:
           for i in $(seq 1 "$runs"); do
             echo "=== boundary run $i of $runs (classes: $classes) ==="
             xvfb-run --server-args="-screen 0 1600x1280x24" \
-              mvn clean install -B '-Pselenium,!development' \
-              -Dit.test="$classes" -DfailIfNoSpecifiedTests=false \
-              2>&1 | tee "$GITHUB_WORKSPACE/stress-logs/boundary-run-$i.log"
+               mvn clean install -B '-Pselenium,!development' \
+               -Dit.test="$classes" -DfailIfNoSpecifiedTests=false \
+               -DargLine="-Xlog:gc:file=$GITHUB_WORKSPACE/gc-logs/gc-boundary-$i.log:uptime,pid" \
+               2>&1 | tee "$GITHUB_WORKSPACE/stress-logs/boundary-run-$i.log"
             rc=${PIPESTATUS[0]}
             echo "boundary run $i exit code: $rc"
             [ "$rc" -ne 0 ] && failed=1
@@ -144,9 +147,10 @@ jobs:
           export KITODO_STRESS_ITERATIONS="$iterations"
           echo "=== login stress ($iterations iterations) ==="
           xvfb-run --server-args="-screen 0 1600x1280x24" \
-            mvn clean install -B '-Pselenium,!development' \
-            -Dit.test='LoginStress' -DfailIfNoSpecifiedTests=false \
-            2>&1 | tee "$GITHUB_WORKSPACE/stress-logs/login-stress.log"
+             mvn clean install -B '-Pselenium,!development' \
+             -Dit.test='LoginStress' -DfailIfNoSpecifiedTests=false \
+             -DargLine="-Xlog:gc:file=$GITHUB_WORKSPACE/gc-logs/gc-login.log:uptime,pid" \
+             2>&1 | tee "$GITHUB_WORKSPACE/stress-logs/login-stress.log"
           rc=${PIPESTATUS[0]}
           echo "login stress exit code: $rc"
           if [ "$rc" -ne 0 ]; then
@@ -182,7 +186,8 @@ jobs:
           grep -hm5 -E "Connecting to|Reusing|http-outgoing|Session .*closed|Adding a new [0-9]+ connection|HikariPool|c3p0" boundary-run-1.log 2>/dev/null || echo "(no debug logger output found - check CATALINA_OPTS)"
           echo "=== thread dumps collected by type ==="
           for p in tomcat testjvm h2server java; do echo "$p: $(ls "$GITHUB_WORKSPACE/thread-dumps" 2>/dev/null | grep -c "^$p-")"; done
-          echo "=== GC log size: $(wc -c < "$GITHUB_WORKSPACE/gc-logs/gc-all.log" 2>/dev/null || echo 0) bytes ==="
+          echo "=== GC logs ==="
+          ls -l "$GITHUB_WORKSPACE/gc-logs" 2>/dev/null || echo "(none)"
           echo "=== CPU sample count: $(grep -c '^=== ' "$GITHUB_WORKSPACE/stress-logs/cpu-samples.txt" 2>/dev/null || echo 0) ==="
           source results.env 2>/dev/null || true
           if [ "${boundary-failed:-0}" = "1" ]; then
