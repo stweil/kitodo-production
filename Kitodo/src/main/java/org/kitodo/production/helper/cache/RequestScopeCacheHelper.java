@@ -41,6 +41,12 @@ public class RequestScopeCacheHelper {
     private static final String ATTRIBUTE_NAME = "RequestScopeCacheHelper";
 
     /**
+     * Sentinel value used to represent a cached {@code null} result, since
+     * {@link ConcurrentHashMap} does not allow {@code null} values.
+     */
+    private static final Object NULL_VALUE = new Object();
+
+    /**
      * Load or create a simple hash map in the FacesContext.getAttributes() map.
      * @return the cache
      */
@@ -73,9 +79,11 @@ public class RequestScopeCacheHelper {
             // save value if it does not yet exist
             if (!cache.containsKey(key)) {
                 T value = supplier.get();
-                cache.put(key, value);
+                // ConcurrentHashMap does not allow null values, so a sentinel is stored instead
+                cache.put(key, Objects.isNull(value) ? NULL_VALUE : value);
             };
-            return clazz.cast(cache.get(key));
+            Object cachedValue = cache.get(key);
+            return cachedValue == NULL_VALUE ? null : clazz.cast(cachedValue);
         }
         // cache not available, e.g., when called outside of request scope (in a background process)
         return supplier.get();
