@@ -88,7 +88,12 @@ public class Browser {
             provideGeckoDriver(); // can remain for now
         }
         actions = new Actions(webDriver);
-        webDriver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+        // Keep the implicit wait at or below the smallest explicit WebDriverWait used by the page
+        // objects (5s, e.g. TopNavigationPage.clickNavigationLink). A larger implicit wait interacts
+        // badly with those explicit waits: when the expected element is absent, the first findElement
+        // poll blocks for the full implicit duration, inflating a 5s explicit wait to the implicit
+        // duration. 5s still leaves grace for element lookups that rely on the implicit wait.
+        webDriver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
         goTo("");
         webDriver.manage().window().setSize(new Dimension(1280, 1024));
     }
