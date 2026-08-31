@@ -59,7 +59,7 @@
         <hibernate-search.version>7.0.1.Final</hibernate-search.version>
         <jaxb.api.version>4.0.4</jaxb.api.version>
         <jaxb.glassfish-runtime.version>4.0.6</jaxb.glassfish-runtime.version>
-        <jaxb2-basics-runtime.version>1.11.1</jaxb2-basics-runtime.version>
+        <jaxb2-basics-runtime.version>2.0.12</jaxb2-basics-runtime.version>
         <jaxen.version>1.2.0</jaxen.version>
         <jhove.version>1.34.0</jhove.version>
         <jhove.modules.gif.hul.version>1.4.3</jhove.modules.gif.hul.version>
