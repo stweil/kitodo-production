@@ -31,8 +31,11 @@ public class MockIndex {
     public static void startNode() throws Exception {
         final String nodeName = "index";
         final String port = "9205"; // defined in test resources file hibernate.cfg.xml
+        // path.data is "target", so the node stores its cluster state under
+        // "target/nodes", not "target/index". Stale state (e.g. leftover cluster
+        // blocks) from a previous run must be removed or it leaks into the next one.
+        removeOldDataDirectories(new File(TARGET, "nodes").getAbsolutePath());
         Environment environment = prepareEnvironment(port, nodeName, Paths.get("target", "classes"));
-        removeOldDataDirectories("target/" + nodeName);
         node = new ExtendedNode(environment, Collections.singleton(Netty4Plugin.class));
         node.start();
     }
