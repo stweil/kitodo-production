@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
+import org.kitodo.MockDatabase;
 import org.kitodo.data.database.beans.User;
 import org.kitodo.production.services.ServiceManager;
 import org.kitodo.selenium.testframework.BaseTestSelenium;
@@ -59,7 +60,7 @@ public class LoginStress extends BaseTestSelenium {
             long start = System.nanoTime();
             try {
                 logger.info("Login stress iteration {}/{}", i, iterations);
-                Pages.getLoginPage().goTo().performLogin(user);
+                Pages.getLoginPage().goTo().performLogin(user, MockDatabase.DEFAULT_USER_PASSWORD);
                 await("Wait for redirect after login to complete")
                         .pollInterval(500, TimeUnit.MILLISECONDS)
                         .atMost(60, TimeUnit.SECONDS)
