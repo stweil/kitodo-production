@@ -36,6 +36,7 @@ import org.openqa.selenium.NoAlertPresentException;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
@@ -81,7 +82,24 @@ public class Browser {
                 options.addArguments("--disable-dev-shm-usage");
             }
 
-            webDriver = new ChromeDriver(options);
+            // Optional diagnostics for the stress workflow: write Chrome's own log to a file
+            // and capture chromedriver's command log (verbose, COMMAND level) in a file.
+            // These reveal what the browser and the driver are doing while a WebDriver
+            // command hangs. The properties are read by the driver service at build time.
+            if (Objects.nonNull(System.getenv("KITODO_STRESS_DIAGNOSTICS"))) {
+                String chromeDebugLog = USER_DIR + "/target/chrome-debug.log";
+                String driverDebugLog = USER_DIR + "/target/chromedriver-diagnostic.log";
+                options.addArguments("--enable-logging=FILE");
+                options.addArguments("--log-file=" + chromeDebugLog);
+                options.addArguments("--v=1");
+                System.setProperty(ChromeDriverService.CHROME_DRIVER_LOG_PROPERTY, driverDebugLog);
+                System.setProperty(ChromeDriverService.CHROME_DRIVER_LOG_LEVEL_PROPERTY, "COMMAND");
+                System.setProperty(ChromeDriverService.CHROME_DRIVER_VERBOSE_LOG_PROPERTY, "true");
+                System.setProperty(ChromeDriverService.CHROME_DRIVER_APPEND_LOG_PROPERTY, "true");
+                webDriver = new ChromeDriver(ChromeDriverService.createDefaultService(), options);
+            } else {
+                webDriver = new ChromeDriver(options);
+            }
         }
 
         if (BROWSER_TYPE.equals(BrowserType.FIREFOX)) {
