@@ -116,10 +116,9 @@ public class LanguageForm implements Serializable {
             if (supportedLocale.getLanguage().length() > 0) {
                 Map<String, Object> translation = new HashMap<>();
                 translation.put("id", supportedLocale.toString());
-                String displayLanguageSelf = displayLocaleWithRegion(supportedLocale, supportedLocale);
-                translation.put("displayLanguageSelf", displayLanguageSelf);
+                translation.put("displayLanguageSelf", LocaleHelper.displayLanguage(supportedLocale, supportedLocale));
                 translation.put("displayLanguageTranslated",
-                    displayLocaleWithRegion(supportedLocale, currentDisplayLanguage));
+                    LocaleHelper.displayLanguage(supportedLocale, currentDisplayLanguage));
                 translation.put("selected", supportedLocale.equals(currentDisplayLanguage));
                 translation.put("flag", "jakarta.faces.resource/images/" + supportedLocale + ".svg");
                 supportedLocales.add(translation);
@@ -134,34 +133,7 @@ public class LanguageForm implements Serializable {
      */
     public String getCurrentLanguageTranslated() {
         Locale locale = FacesContext.getCurrentInstance().getViewRoot().getLocale();
-        return displayLocaleWithRegion(locale, locale);
-    }
-
-    /**
-     * A locale's own display name, plus its region when it has one.
-     * {@link Locale#getDisplayLanguage} omits the region, so a region-specific
-     * locale (e.g. de_CH) would display identically to the base one (e.g. de).
-     * Appending the region makes "Deutsch, Schweiz" distinct from "Deutsch".
-     *
-     * <p>The first letter is capitalized so all entries start with an uppercase
-     * letter in the language selector, even where the native name is lowercase
-     * (e.g. "español" is shown as "Español").</p>
-     *
-     * @param locale
-     *            locale to name
-     * @param displayIn
-     *            language used to render the name
-     * @return the display name, capitalized and with region appended when present
-     */
-    private static String displayLocaleWithRegion(Locale locale, Locale displayIn) {
-        String name = locale.getDisplayLanguage(displayIn);
-        if (name.length() > 0) {
-            name = Character.toUpperCase(name.charAt(0)) + name.substring(1);
-        }
-        if (locale.getCountry().length() > 0) {
-            name += ", " + locale.getDisplayCountry(displayIn);
-        }
-        return name;
+        return LocaleHelper.displayLanguage(locale, locale);
     }
 
     /**

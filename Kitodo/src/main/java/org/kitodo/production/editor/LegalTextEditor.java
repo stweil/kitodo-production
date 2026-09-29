@@ -16,7 +16,6 @@ import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -29,6 +28,7 @@ import jakarta.inject.Named;
 import org.kitodo.config.ConfigCore;
 import org.kitodo.production.helper.Helper;
 import org.kitodo.production.helper.LegalTexts;
+import org.kitodo.production.helper.LocaleHelper;
 
 @Named("LegalTextEditor")
 @ViewScoped
@@ -37,7 +37,6 @@ public class LegalTextEditor implements Serializable {
     private static List<String> legalTextTitles;
     private String currentLegalTextTitle;
     private String currentLegalTextContent;
-    private List<Locale> availableLocales = new ArrayList<>();
     private String currentLanguage;
 
     /**
@@ -52,11 +51,8 @@ public class LegalTextEditor implements Serializable {
 
         currentLegalTextTitle = legalTextTitles.getFirst();
 
-        FacesContext.getCurrentInstance().getApplication().getSupportedLocales()
-                .forEachRemaining(availableLocales::add);
-        if (!availableLocales.isEmpty()) {
-            currentLanguage = availableLocales.getFirst().getLanguage();
-        }
+        Locale defaultLocale = FacesContext.getCurrentInstance().getApplication().getDefaultLocale();
+        currentLanguage = defaultLocale.toString();
         loadText();
     }
 
@@ -133,12 +129,24 @@ public class LegalTextEditor implements Serializable {
     }
 
     /**
-     * Get list of available locales.
+     * Get the locales for which a legal text can be maintained.
      *
-     * @return list of available locales
+     * <p>The label of each option is rendered in the <em>current UI language</em> (so the names
+     * follow the user's language setting) and includes the region for region-specific locales
+     * (so de and de_CH are distinguishable). The value is the locale tag, which is also the
+     * suffix of the corresponding legal_&lt;text&gt;_&lt;lang&gt;.html file.</p>
+     *
+     * @return list of locale options for the language menu
      */
-    public List<Locale> getAvailableLocales() {
-        return availableLocales;
+    public List<LocaleOption> getAvailableLocales() {
+        Locale uiLanguage = FacesContext.getCurrentInstance().getViewRoot().getLocale();
+        List<LocaleOption> options = new LinkedList<>();
+        FacesContext.getCurrentInstance().getApplication().getSupportedLocales().forEachRemaining(locale -> {
+            if (!locale.getLanguage().isEmpty()) {
+                options.add(new LocaleOption(locale, uiLanguage));
+            }
+        });
+        return options;
     }
 
     /**
@@ -160,6 +168,36 @@ public class LegalTextEditor implements Serializable {
         if (!Objects.equals(language, this.currentLanguage)) {
             this.currentLanguage = language;
             loadText();
+        }
+    }
+
+    /**
+     * A selectable legal-text language: the underlying locale (its string form is the value and
+     * the suffix of the legal_&lt;text&gt;_&lt;lang&gt;.html file) and a display name rendered in
+     * the given UI language.
+     */
+    public static class LocaleOption {
+
+        private final Locale locale;
+        private final String language;
+        private final String displayLanguage;
+
+        public LocaleOption(Locale locale, Locale uiLanguage) {
+            this.locale = locale;
+            this.language = locale.toString();
+            this.displayLanguage = LocaleHelper.displayLanguage(locale, uiLanguage);
+        }
+
+        public Locale getLocale() {
+            return locale;
+        }
+
+        public String getLanguage() {
+            return language;
+        }
+
+        public String getDisplayLanguage() {
+            return displayLanguage;
         }
     }
 }
