@@ -80,8 +80,8 @@ public class LoginST extends BaseTestSelenium {
         // modify CSRF token to something invalid
         Browser.getDriver().executeScript("$('input[name=\"_csrf\"]').val('abc');");
 
-        // fail at logging in
-        loginPage.performLoginAsAdmin();
+        // fail at logging in (no redirect happens, so do not wait for one)
+        loginPage.performLoginAsAdmin(false);
 
         // make sure we are still at the login page
         await().ignoreExceptions().pollDelay(100, TimeUnit.MILLISECONDS).atMost(5, TimeUnit.SECONDS)
