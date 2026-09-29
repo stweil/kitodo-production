@@ -145,4 +145,33 @@ public class LocaleHelper {
         return facesContext.getApplication().getDefaultLocale(); // application locale
     }
 
+    /**
+     * A locale's display name rendered in another language, plus the region when the locale
+     * has one.
+     *
+     * <p>{@link Locale#getDisplayLanguage(Locale)} omits the region, so a region-specific
+     * locale (e.g. de_CH) would display identically to the base one (e.g. de). Appending the
+     * region makes "Deutsch, Schweiz" distinct from "Deutsch" (rendered in German) or "German,
+     * Switzerland" distinct from "German" (rendered in English).</p>
+     *
+     * <p>The first letter is capitalized so all entries start with an uppercase letter, even
+     * where the native name is lowercase (e.g. "español" is shown as "Español").</p>
+     *
+     * @param locale
+     *            locale to name
+     * @param displayIn
+     *            language used to render the name
+     * @return the display name, capitalized and with the region appended when present
+     */
+    public static String displayLanguage(Locale locale, Locale displayIn) {
+        String name = locale.getDisplayLanguage(displayIn);
+        if (!name.isEmpty()) {
+            name = Character.toUpperCase(name.charAt(0)) + name.substring(1);
+        }
+        if (!locale.getCountry().isEmpty()) {
+            name += ", " + locale.getDisplayCountry(displayIn);
+        }
+        return name;
+    }
+
 }
