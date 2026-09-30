@@ -57,7 +57,7 @@ public class LanguageForm implements Serializable {
 
     @PostConstruct
     private void updateLegalTexts() {
-        LegalTexts.updateTexts(getLanguage());
+        LegalTexts.updateTexts(getLanguageTag());
     }
 
     /**
@@ -208,5 +208,16 @@ public class LanguageForm implements Serializable {
      */
     public String getLanguage() {
         return getLocale().getLanguage();
+    }
+
+    /**
+     * Get the language of the current user as locale tag, including the country
+     * when present (e.g. "de_CH"), which is also the suffix of the legal text
+     * files.
+     *
+     * @return String language tag
+     */
+    public String getLanguageTag() {
+        return getLocale().toString();
     }
 }
