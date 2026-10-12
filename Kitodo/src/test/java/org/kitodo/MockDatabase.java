@@ -102,7 +102,7 @@ import org.kitodo.test.utils.TestConstants;
 import org.opensearch.common.settings.Settings;
 import org.opensearch.env.Environment;
 import org.opensearch.node.Node;
-import org.opensearch.transport.Netty4Plugin;
+import org.opensearch.transport.Netty4ModulePlugin;
 
 /**
  * Insert data to test database.
@@ -149,7 +149,7 @@ public class MockDatabase {
             final String port = "9205"; // defined in test resources file hibernate.cfg.xml
             Environment environment = prepareEnvironment(port, nodeName, Paths.get("target", "classes"));
             removeOldDataDirectories("target/" + nodeName);
-            node = new ExtendedNode(environment, Collections.singleton(Netty4Plugin.class));
+            node = new ExtendedNode(environment, Collections.singleton(Netty4ModulePlugin.class));
             node.start();
         }
     }
