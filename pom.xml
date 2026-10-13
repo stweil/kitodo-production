@@ -258,7 +258,7 @@ from system library in Java 11+ -->
             <dependency>
                 <groupId>com.sun.xml.bind</groupId>
                 <artifactId>jaxb-impl</artifactId>
-                <version>4.0.6</version>
+                <version>4.0.9</version>
                 <scope>runtime</scope>
             </dependency>
             <dependency>
