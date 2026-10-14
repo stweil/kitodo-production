@@ -11,10 +11,7 @@
 
 package org.kitodo.selenium;
 
-import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +19,6 @@ import org.junit.jupiter.api.Test;
 import org.kitodo.selenium.testframework.BaseTestSelenium;
 import org.kitodo.selenium.testframework.Browser;
 import org.kitodo.selenium.testframework.Pages;
-import org.openqa.selenium.By;
 
 public class ManagementST extends BaseTestSelenium {
 
@@ -43,7 +39,11 @@ public class ManagementST extends BaseTestSelenium {
     public void editUserConfigurationTest() throws Exception {
         Pages.getUserEditPage().changeUserSettings();
 
-        await("Wait for visible users header").atMost(20, TimeUnit.SECONDS).ignoreExceptions().untilAsserted(
-                () -> assertTrue(Browser.getDriver().findElement(By.partialLinkText("Users")).isDisplayed()));
+        // changeUserSettings() picks the language at a fixed position in the dropdown, which depends
+        // on the locale order in faces-config.xml; the resulting page may therefore render in a
+        // non-English language, so verify the users table is displayed instead of relying on the
+        // localized "Users" header/link text.
+        int usersDisplayed = Pages.getUsersPage().countListedUsers();
+        assertTrue(usersDisplayed > 0, "Users page should display at least one user");
     }
 }
