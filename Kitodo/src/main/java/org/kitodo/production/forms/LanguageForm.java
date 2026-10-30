@@ -116,9 +116,9 @@ public class LanguageForm implements Serializable {
             if (supportedLocale.getLanguage().length() > 0) {
                 Map<String, Object> translation = new HashMap<>();
                 translation.put("id", supportedLocale.toString());
-                translation.put("displayLanguageSelf", supportedLocale.getDisplayLanguage(supportedLocale));
+                translation.put("displayLanguageSelf", LocaleHelper.displayLanguage(supportedLocale, supportedLocale));
                 translation.put("displayLanguageTranslated",
-                    supportedLocale.getDisplayLanguage(currentDisplayLanguage));
+                    LocaleHelper.displayLanguage(supportedLocale, currentDisplayLanguage));
                 translation.put("selected", supportedLocale.equals(currentDisplayLanguage));
                 translation.put("flag", "jakarta.faces.resource/images/" + supportedLocale + ".svg");
                 supportedLocales.add(translation);
@@ -133,7 +133,7 @@ public class LanguageForm implements Serializable {
      */
     public String getCurrentLanguageTranslated() {
         Locale locale = FacesContext.getCurrentInstance().getViewRoot().getLocale();
-        return locale.getDisplayLanguage(locale);
+        return LocaleHelper.displayLanguage(locale, locale);
     }
 
     /**
